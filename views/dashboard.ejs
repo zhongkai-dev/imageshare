@@ -12,11 +12,6 @@
 <div class="chat-container">
   <!-- Chat area -->
   <div class="chat-area" id="chatArea">
-    <div class="welcome-message">
-      <h4>Welcome to Image Share!</h4>
-      <p>Upload images and files to share. Click on images for full-screen preview.</p>
-    </div>
-    
     <% if (typeof error !== 'undefined') { %>
       <div class="alert alert-danger" role="alert">
         <%= error %>
@@ -106,7 +101,7 @@
       <div class="empty-state">
         <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
         <h5 class="text-muted">No files uploaded yet</h5>
-        <p>Upload your first file using the form below.</p>
+        <p>Upload your first file using the options below.</p>
       </div>
     <% } %>
     
@@ -114,17 +109,42 @@
     <div style="height: 15px;"></div>
   </div>
   
-  <!-- Upload form -->
+  <!-- Upload form with separate options -->
   <div class="upload-form">
-    <form action="/files/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
-      <div class="input-group">
-        <input class="form-control" type="file" id="files" name="files" multiple required>
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-paper-plane"></i> Upload
+    <div class="upload-tabs">
+      <div class="btn-group w-100 mb-2">
+        <button type="button" class="btn btn-outline-primary active" id="imagesTabBtn" onclick="switchTab('images')">
+          <i class="fas fa-images me-1"></i> Images
+        </button>
+        <button type="button" class="btn btn-outline-primary" id="filesTabBtn" onclick="switchTab('files')">
+          <i class="fas fa-file me-1"></i> Files
         </button>
       </div>
-      <div class="form-text text-center text-muted">Upload multiple images and files (Max: 10MB each)</div>
-    </form>
+    </div>
+    
+    <!-- Images Upload Form -->
+    <div id="imagesUploadForm" class="upload-tab-content">
+      <form action="/files/upload-images" method="post" enctype="multipart/form-data">
+        <div class="input-group">
+          <input type="file" class="form-control" name="images" multiple accept="image/*" required>
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">Upload Images</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Files Upload Form -->
+    <div id="filesUploadForm" class="upload-tab-content">
+      <form action="/files/upload-documents" method="post" enctype="multipart/form-data">
+        <div class="input-group">
+          <input type="file" class="form-control" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar,.ppt,.pptx" required>
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-primary">Upload Files</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -145,13 +165,41 @@
     const chatArea = document.getElementById('chatArea');
     chatArea.scrollTop = chatArea.scrollHeight;
     
-    // Add a submit handler to show a loading indicator
-    document.getElementById('uploadForm').addEventListener('submit', function() {
+    // Add submit handlers to show loading indicators
+    document.getElementById('imagesUploadForm').addEventListener('submit', function() {
+      const btn = this.querySelector('button[type="submit"]');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+      btn.disabled = true;
+    });
+    
+    document.getElementById('filesUploadForm').addEventListener('submit', function() {
       const btn = this.querySelector('button[type="submit"]');
       btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
       btn.disabled = true;
     });
   };
+  
+  // Tab switching functionality
+  function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.upload-tab-content').forEach(tab => {
+      tab.style.display = 'none';
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.upload-tabs .btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Show the selected tab content and activate button
+    if (tabName === 'images') {
+      document.getElementById('imagesUploadForm').style.display = 'block';
+      document.getElementById('imagesTabBtn').classList.add('active');
+    } else {
+      document.getElementById('filesUploadForm').style.display = 'block';
+      document.getElementById('filesTabBtn').classList.add('active');
+    }
+  }
   
   // Image preview functionality
   function openImagePreview(src, name) {
@@ -194,4 +242,67 @@
       console.error('Error downloading files:', e);
     }
   }
+
+  // Image preview functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle image clicks for preview
+    document.querySelectorAll('.chat-img, .image-grid-item img').forEach(img => {
+      img.addEventListener('click', function() {
+        const overlay = document.getElementById('imagePreviewOverlay');
+        const previewImage = document.getElementById('previewImage');
+        const imageTitle = document.getElementById('imageTitle');
+        
+        previewImage.src = this.src;
+        imageTitle.textContent = this.alt || 'Image Preview';
+        overlay.style.display = 'flex';
+      });
+    });
+    
+    // Close preview on button click
+    document.getElementById('closePreview').addEventListener('click', function() {
+      document.getElementById('imagePreviewOverlay').style.display = 'none';
+    });
+    
+    // Close preview on overlay click
+    document.getElementById('imagePreviewOverlay').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.style.display = 'none';
+      }
+    });
+    
+    // Handle PWA install prompt for iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isIOS && !isInStandaloneMode) {
+      document.getElementById('iosInstallMessage').style.display = 'block';
+    }
+
+    // Tab switching functionality
+    const imagesTabBtn = document.getElementById('imagesTabBtn');
+    const filesTabBtn = document.getElementById('filesTabBtn');
+    const imagesUploadForm = document.getElementById('imagesUploadForm');
+    const filesUploadForm = document.getElementById('filesUploadForm');
+
+    // Initially show images form and hide files form
+    imagesUploadForm.style.display = 'block';
+    filesUploadForm.style.display = 'none';
+    imagesTabBtn.classList.add('active');
+
+    // Switch to images tab
+    imagesTabBtn.addEventListener('click', function() {
+      imagesUploadForm.style.display = 'block';
+      filesUploadForm.style.display = 'none';
+      imagesTabBtn.classList.add('active');
+      filesTabBtn.classList.remove('active');
+    });
+
+    // Switch to files tab
+    filesTabBtn.addEventListener('click', function() {
+      filesUploadForm.style.display = 'block';
+      imagesUploadForm.style.display = 'none';
+      filesTabBtn.classList.add('active');
+      imagesTabBtn.classList.remove('active');
+    });
+  });
 </script> 

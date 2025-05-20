@@ -33,10 +33,50 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+// File filters
+const imageFilter = (req, file, cb) => {
+  // Accept only image files
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const documentFilter = (req, file, cb) => {
+  // Accept document files
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'application/zip',
+    'application/x-rar-compressed',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  ];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only document files are allowed!'), false);
+  }
+};
+
+// Create different upload handlers for images and documents
+const uploadImages = multer({ 
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: imageFilter
+}).array('images', 10);
+
+const uploadDocuments = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: documentFilter
+}).array('files', 10);
 
 // Dashboard - Show user's files grouped by upload batch
 router.get('/dashboard', isAuthenticated, async (req, res) => {
@@ -78,35 +118,82 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
   }
 });
 
-// Upload multiple files
-router.post('/upload', isAuthenticated, upload.array('files', 10), async (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
+// Upload images
+router.post('/upload-images', isAuthenticated, (req, res) => {
+  uploadImages(req, res, async (err) => {
+    if (err) {
+      console.error('Image upload error:', err);
       return res.status(400).redirect('/files/dashboard');
     }
-
-    // Generate a group ID for this batch of files
-    const groupId = uuidv4();
     
-    // Save each file info to database with the same groupId
-    const filePromises = req.files.map(file => {
-      return File.create({
-        filename: file.filename,
-        originalName: file.originalname,
-        path: file.path,
-        size: file.size,
-        mimetype: file.mimetype,
-        userId: req.session.userId,
-        groupId: groupId // Add the group ID to all files in this upload
-      });
-    });
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).redirect('/files/dashboard');
+      }
 
-    await Promise.all(filePromises);
-    res.redirect('/files/dashboard');
-  } catch (err) {
-    console.error('File upload error:', err);
-    res.status(500).redirect('/files/dashboard');
-  }
+      // Generate a group ID for this batch of files
+      const groupId = uuidv4();
+      
+      // Save each file info to database with the same groupId
+      const filePromises = req.files.map(file => {
+        return File.create({
+          filename: file.filename,
+          originalName: file.originalname,
+          path: file.path,
+          size: file.size,
+          mimetype: file.mimetype,
+          userId: req.session.userId,
+          groupId: groupId,
+          fileType: 'image'
+        });
+      });
+
+      await Promise.all(filePromises);
+      res.redirect('/files/dashboard');
+    } catch (err) {
+      console.error('File upload error:', err);
+      res.status(500).redirect('/files/dashboard');
+    }
+  });
+});
+
+// Upload documents
+router.post('/upload-documents', isAuthenticated, (req, res) => {
+  uploadDocuments(req, res, async (err) => {
+    if (err) {
+      console.error('Document upload error:', err);
+      return res.status(400).redirect('/files/dashboard');
+    }
+    
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).redirect('/files/dashboard');
+      }
+
+      // Generate a group ID for this batch of files
+      const groupId = uuidv4();
+      
+      // Save each file info to database with the same groupId
+      const filePromises = req.files.map(file => {
+        return File.create({
+          filename: file.filename,
+          originalName: file.originalname,
+          path: file.path,
+          size: file.size,
+          mimetype: file.mimetype,
+          userId: req.session.userId,
+          groupId: groupId,
+          fileType: 'document'
+        });
+      });
+
+      await Promise.all(filePromises);
+      res.redirect('/files/dashboard');
+    } catch (err) {
+      console.error('File upload error:', err);
+      res.status(500).redirect('/files/dashboard');
+    }
+  });
 });
 
 // View image file (for previews)

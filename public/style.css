@@ -100,6 +100,27 @@ body {
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
 
+/* Upload tabs styling */
+.upload-tabs .btn-group {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.upload-tabs .btn {
+  flex: 1;
+  padding: 8px 0;
+  transition: all 0.2s;
+}
+
+.upload-tabs .btn.active {
+  background-color: #4e73df;
+  color: white;
+}
+
+.upload-tab-content {
+  margin-top: 10px;
+}
+
 /* Message styling */
 .message-container {
   margin-bottom: 20px;

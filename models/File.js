@@ -30,6 +30,11 @@ const FileSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  fileType: {
+    type: String,
+    enum: ['image', 'document'],
+    default: 'image'
+  },
   uploadDate: {
     type: Date,
     default: Date.now
