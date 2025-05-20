@@ -72,11 +72,14 @@
         <p>Upload your first file using the form below.</p>
       </div>
     <% } %>
+    
+    <!-- Spacer to ensure last message isn't covered by the upload form -->
+    <div style="height: 15px;"></div>
   </div>
   
   <!-- Upload form -->
   <div class="upload-form">
-    <form action="/files/upload" method="POST" enctype="multipart/form-data">
+    <form action="/files/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
       <div class="input-group">
         <input class="form-control" type="file" id="files" name="files" multiple required>
         <button type="submit" class="btn btn-primary">
@@ -104,6 +107,13 @@
   window.onload = function() {
     const chatArea = document.getElementById('chatArea');
     chatArea.scrollTop = chatArea.scrollHeight;
+    
+    // Add a submit handler to show a loading indicator
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+      const btn = this.querySelector('button[type="submit"]');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+      btn.disabled = true;
+    });
   };
   
   // Image preview functionality
