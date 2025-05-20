@@ -1,16 +1,16 @@
-# File Notes - Multi-User File Storage System
+# Image Share - Chat-Style Sharing Platform
 
-A simple web application that allows multiple users to upload, download, and manage their files using a 6-digit number for authentication.
+A modern web application that allows users to share images and files in a chat-style interface with fullscreen preview capabilities.
 
 ## Features
 
-- Multi-user support - each user has a private file storage
-- User authentication with any 6-digit number (login/registration)
-- Upload images and files (up to 10MB)
-- View all your uploaded files
-- Download files
-- Delete files
-- User-specific files (each user can only see their own files)
+- Chat-style interface for image and file sharing
+- Multiple file upload support - upload several files at once
+- Fullscreen image preview when clicking on images
+- Multi-user support - each user has their own private chat space
+- Simple authentication with any 6-digit number
+- Instant file sharing and viewing
+- Mobile-friendly responsive design
 
 ## Setup & Installation
 
@@ -44,13 +44,14 @@ For Windows users, simply double-click the `start.cmd` file which will:
 
 1. Open the application in your browser at http://localhost:3000
 2. Enter any 6-digit number (e.g., 123456) to login or register
-3. Upload files using the upload form
-4. View, download, or delete your files
-5. Logout when finished
+3. Upload files using the form at the bottom of the chat
+4. View your uploaded files in the chat stream
+5. Click on images to see them in fullscreen mode
+6. Download or delete files as needed
 
 ### Multiple Users
 
-- Each user gets their own private file storage
+- Each user gets their own private chat space
 - Different users can use different 6-digit numbers (e.g., one user can use 123456, another can use 654321)
 - Files are only visible to the user who uploaded them
 
@@ -59,5 +60,6 @@ For Windows users, simply double-click the `start.cmd` file which will:
 - Built with Node.js and Express
 - Uses MongoDB for data storage
 - File uploads handled by Multer
-- Bootstrap 5 for UI
+- Bootstrap 5 for responsive UI
+- Modern chat-style interface
 - EJS for templating 

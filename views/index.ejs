@@ -1,36 +1,58 @@
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-lg">
-      <div class="card-header bg-primary text-white text-center py-3">
-        <h4>Welcome to File Notes</h4>
-      </div>
-      <div class="card-body p-4">
-        <% if (typeof error !== 'undefined') { %>
-          <div class="alert alert-danger" role="alert">
-            <%= error %>
-          </div>
-        <% } %>
-        
-        <p class="mb-4 text-center">Enter your 6-digit user ID to login or register.</p>
-        
-        <form action="/auth/login" method="POST">
-          <div class="mb-3">
-            <label for="userId" class="form-label">6-Digit User ID</label>
-            <input type="text" class="form-control form-control-lg" id="userId" name="userId" 
-                  placeholder="Enter any 6 digits" pattern="[0-9]{6}" maxlength="6" required>
-            <div class="form-text">Enter any 6-digit code of your choice (e.g., 123456, 000000, etc.)</div>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg mt-5">
+        <div class="card-header bg-primary text-white text-center py-3">
+          <h4>Welcome to Image Share</h4>
+        </div>
+        <div class="card-body p-4">
+          <% if (typeof error !== 'undefined') { %>
+            <div class="alert alert-danger" role="alert">
+              <%= error %>
+            </div>
+          <% } %>
+          
+          <p class="mb-4 text-center">Enter your 6-digit user ID to access your chat and images.</p>
+          
+          <form action="/auth/login" method="POST">
+            <div class="mb-3">
+              <label for="userId" class="form-label">6-Digit User ID</label>
+              <input type="text" class="form-control form-control-lg" id="userId" name="userId" 
+                    placeholder="Enter any 6 digits" pattern="[0-9]{6}" maxlength="6" required>
+              <div class="form-text">Enter any 6-digit code of your choice (e.g., 123456, 000000, etc.)</div>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i> Enter Chat
+              </button>
+            </div>
+          </form>
+          
+          <div class="mt-4 text-center">
+            <p class="mb-0">First time? Simply enter any 6-digit number to create your account.</p>
+            <p class="text-muted small">Remember your number to access your files in the future.</p>
+            <div class="alert alert-info mt-3">
+              <i class="fas fa-info-circle me-2"></i> Multiple users can use different 6-digit codes to access their own images.
+            </div>
           </div>
           
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary btn-lg">Login / Register</button>
-          </div>
-        </form>
-        
-        <div class="mt-4 text-center">
-          <p class="mb-0">First time? Simply enter any 6-digit number to create your account.</p>
-          <p class="text-muted small">Remember your number to access your files in the future.</p>
-          <div class="alert alert-info mt-3">
-            <i class="fas fa-info-circle me-2"></i> Multiple users can use different 6-digit codes to access their own files.
+          <div class="mt-4 pt-3 border-top">
+            <h5 class="text-center mb-3">Features</h5>
+            <div class="row text-center">
+              <div class="col-md-4">
+                <i class="fas fa-images fa-2x text-primary mb-2"></i>
+                <p>Chat-Style Interface</p>
+              </div>
+              <div class="col-md-4">
+                <i class="fas fa-upload fa-2x text-success mb-2"></i>
+                <p>Multiple File Upload</p>
+              </div>
+              <div class="col-md-4">
+                <i class="fas fa-search-plus fa-2x text-info mb-2"></i>
+                <p>Full-screen Preview</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
