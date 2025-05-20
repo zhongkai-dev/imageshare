@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filters
+// File filter for images only
 const imageFilter = (req, file, cb) => {
   // Accept only image files
   if (file.mimetype.startsWith('image/')) {
@@ -43,40 +43,12 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
-const documentFilter = (req, file, cb) => {
-  // Accept document files
-  const allowedTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain',
-    'application/zip',
-    'application/x-rar-compressed',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only document files are allowed!'), false);
-  }
-};
-
-// Create different upload handlers for images and documents
+// Create upload handler for images
 const uploadImages = multer({ 
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: imageFilter
 }).array('images', 10);
-
-const uploadDocuments = multer({ 
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: documentFilter
-}).array('files', 10);
 
 // Dashboard - Show user's files grouped by upload batch
 router.get('/dashboard', isAuthenticated, async (req, res) => {
@@ -104,16 +76,31 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
       date: fileGroups[key].date
     })).sort((a, b) => b.date - a.date);
     
+    // Helper function for file icons
+    const getFileIcon = (mimetype) => {
+      if (mimetype.startsWith('image/')) return 'fa-file-image text-primary';
+      if (mimetype === 'application/pdf') return 'fa-file-pdf text-danger';
+      if (mimetype.includes('document') || mimetype.includes('word')) return 'fa-file-word text-primary';
+      if (mimetype.includes('spreadsheet') || mimetype.includes('excel')) return 'fa-file-excel text-success';
+      if (mimetype.includes('audio')) return 'fa-file-audio text-warning';
+      if (mimetype.includes('video')) return 'fa-file-video text-danger';
+      if (mimetype.includes('zip') || mimetype.includes('compressed')) return 'fa-file-archive text-warning';
+      if (mimetype.includes('text/')) return 'fa-file-alt text-info';
+      return 'fa-file text-secondary';
+    };
+    
     res.render('dashboard', { 
       userId: req.session.userId,
-      groupedFiles
+      groupedFiles,
+      getFileIcon
     });
   } catch (err) {
     console.error(err);
     res.status(500).render('dashboard', { 
       userId: req.session.userId,
       groupedFiles: [],
-      error: 'Failed to load files'
+      error: 'Failed to load files',
+      getFileIcon: (mimetype) => 'fa-file text-secondary'
     });
   }
 });
@@ -145,45 +132,6 @@ router.post('/upload-images', isAuthenticated, (req, res) => {
           userId: req.session.userId,
           groupId: groupId,
           fileType: 'image'
-        });
-      });
-
-      await Promise.all(filePromises);
-      res.redirect('/files/dashboard');
-    } catch (err) {
-      console.error('File upload error:', err);
-      res.status(500).redirect('/files/dashboard');
-    }
-  });
-});
-
-// Upload documents
-router.post('/upload-documents', isAuthenticated, (req, res) => {
-  uploadDocuments(req, res, async (err) => {
-    if (err) {
-      console.error('Document upload error:', err);
-      return res.status(400).redirect('/files/dashboard');
-    }
-    
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).redirect('/files/dashboard');
-      }
-
-      // Generate a group ID for this batch of files
-      const groupId = uuidv4();
-      
-      // Save each file info to database with the same groupId
-      const filePromises = req.files.map(file => {
-        return File.create({
-          filename: file.filename,
-          originalName: file.originalname,
-          path: file.path,
-          size: file.size,
-          mimetype: file.mimetype,
-          userId: req.session.userId,
-          groupId: groupId,
-          fileType: 'document'
         });
       });
 
