@@ -124,6 +124,33 @@ body {
   align-items: center;
 }
 
+/* Delete message button styling */
+.btn-delete-message {
+  background: transparent;
+  border: none;
+  font-size: 0.8rem;
+  color: #c0c0c0;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+}
+
+.btn-delete-message:hover {
+  color: #e74a3b;
+  background-color: rgba(0,0,0,0.05);
+}
+
+.delete-message-form {
+  margin-left: auto;
+}
+
 .message-content {
   padding: 12px 15px;
 }

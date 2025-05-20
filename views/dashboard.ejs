@@ -30,11 +30,17 @@
             <div class="message-header">
               <strong><%= userId %></strong>
               <small class="text-muted"><%= new Date(group.date).toLocaleString() %></small>
+              <!-- Delete bubble button -->
+              <form action="/files/delete-group/<%= group.groupId %>" method="POST" class="d-inline ms-2 delete-message-form">
+                <button type="submit" class="btn-delete-message" title="Delete message" onclick="return confirm('Delete this entire message?')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
             </div>
             <div class="message-content">
               <!-- If group contains multiple images, show them in a grid -->
               <% if (group.files.length > 1 && group.files.every(file => file.mimetype.startsWith('image/'))) { %>
-                <div class="image-grid">
+                <div class="image-grid <%= group.files.length > 4 ? 'grid-many' : group.files.length > 2 ? 'grid-' + group.files.length : '' %>">
                   <% group.files.forEach(file => { %>
                     <div class="image-grid-item">
                       <img src="/files/view/<%= file._id %>" alt="<%= file.originalName %>" 

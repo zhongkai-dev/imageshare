@@ -185,6 +185,53 @@ router.post('/delete/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Delete entire group of files
+router.post('/delete-group/:groupId', isAuthenticated, async (req, res) => {
+  try {
+    // Find all files in the group that belong to this user
+    const groupId = req.params.groupId;
+    const files = await File.find({ 
+      groupId: groupId,
+      userId: req.session.userId
+    });
+    
+    // If groupId starts with 'single-', it's a special case for files without a real groupId
+    if (groupId.startsWith('single-')) {
+      const fileId = groupId.replace('single-', '');
+      const singleFile = await File.findOne({ 
+        _id: fileId,
+        userId: req.session.userId
+      });
+      
+      if (singleFile) {
+        // Delete single file from disk
+        if (fs.existsSync(singleFile.path)) {
+          fs.unlinkSync(singleFile.path);
+        }
+        // Delete from database
+        await File.findByIdAndDelete(fileId);
+      }
+    } else {
+      // Delete all files in the group
+      const deletePromises = files.map(file => {
+        // Delete file from disk
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+        // Delete from database
+        return File.findByIdAndDelete(file._id);
+      });
+      
+      await Promise.all(deletePromises);
+    }
+    
+    res.redirect('/files/dashboard');
+  } catch (err) {
+    console.error('Error deleting group:', err);
+    res.status(500).redirect('/files/dashboard');
+  }
+});
+
 // Serve app icons for PWA
 router.get('/icons/:icon', (req, res) => {
   // Placeholder for now - in a real app, you'd have actual icon files
