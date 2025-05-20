@@ -66,6 +66,16 @@ function startServer() {
   app.use('/', require('./routes/index'));
   app.use('/auth', require('./routes/auth'));
   app.use('/files', require('./routes/files'));
+  
+  // PWA Service Worker route
+  app.get('/service-worker.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'service-worker.js'));
+  });
+  
+  // PWA Manifest route
+  app.get('/manifest.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+  });
 
   // Start server
   const PORT = process.env.PORT || 3000;

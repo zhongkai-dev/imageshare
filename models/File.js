@@ -26,6 +26,10 @@ const FileSchema = new mongoose.Schema({
     required: true,
     ref: 'User'
   },
+  groupId: {
+    type: String,
+    default: null
+  },
   uploadDate: {
     type: Date,
     default: Date.now

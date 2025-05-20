@@ -7,12 +7,80 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/style.css">
+  <!-- PWA Support -->
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4e73df">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <!-- Safari PWA splash screens -->
+  <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
 </head>
 <body>
   <%- body %>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registered: ', registration);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+    
+    // Add to home screen prompt for Safari
+    let deferredPrompt;
+    const installButton = document.createElement('button');
+    installButton.style.display = 'none';
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Update UI to notify the user they can add to home screen
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Show iOS installation instructions
+        const iosInstallMsg = document.createElement('div');
+        iosInstallMsg.innerHTML = '<div class="ios-install-message">To install this app: tap <i class="fas fa-share"></i> and then "Add to Home Screen"</div>';
+        iosInstallMsg.style.position = 'fixed';
+        iosInstallMsg.style.bottom = '10px';
+        iosInstallMsg.style.left = '0';
+        iosInstallMsg.style.right = '0';
+        iosInstallMsg.style.background = '#4e73df';
+        iosInstallMsg.style.color = 'white';
+        iosInstallMsg.style.padding = '10px';
+        iosInstallMsg.style.textAlign = 'center';
+        iosInstallMsg.style.zIndex = '9999';
+        iosInstallMsg.style.display = 'none';
+        
+        // Only show the message if it hasn't been shown before
+        if (!localStorage.getItem('pwaInstallPromptShown')) {
+          document.body.appendChild(iosInstallMsg);
+          iosInstallMsg.style.display = 'block';
+          
+          // Hide message after 15 seconds
+          setTimeout(() => {
+            iosInstallMsg.style.display = 'none';
+          }, 15000);
+          
+          // Mark as shown
+          localStorage.setItem('pwaInstallPromptShown', 'true');
+        }
+      }
+    });
+  </script>
 </body>
 </html> 
