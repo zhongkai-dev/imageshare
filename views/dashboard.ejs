@@ -38,7 +38,7 @@
               <!-- If there's a text message, show it first -->
               <% if (group.messages && group.messages.length > 0) { %>
                 <% group.messages.forEach(message => { %>
-                  <div class="text-message mb-3">
+                  <div class="text-message">
                     <div class="message-text-content"><%= message.text %></div>
                     <div class="message-text-actions">
                       <button class="btn-copy-message" onclick="copyMessageText(this)" title="Copy message">

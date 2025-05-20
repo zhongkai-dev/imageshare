@@ -89,7 +89,7 @@ body {
 
 /* Chat input form */
 .chat-input-form {
-  padding: 15px;
+  padding: 12px 15px;
   background-color: #fff;
   border-top: 1px solid #e9ecef;
   position: absolute;
@@ -114,15 +114,22 @@ body {
   border-radius: 24px;
   padding: 0 15px;
   margin-right: 10px;
+  transition: all 0.2s;
+}
+
+.message-input-container:focus-within {
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.25);
 }
 
 .message-input {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 12px 0;
+  padding: 10px 0;
   outline: none !important;
   box-shadow: none !important;
+  font-size: 0.95rem;
 }
 
 .input-actions {
@@ -166,7 +173,7 @@ body {
 
 /* Message styling */
 .message-container {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: flex-start;
 }
@@ -175,17 +182,18 @@ body {
   max-width: 85%;
   border-radius: 12px;
   background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
 .message-header {
-  padding: 8px 15px;
+  padding: 6px 12px;
   background-color: #f1f3f5;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.9rem;
 }
 
 .message-actions-header {
@@ -204,6 +212,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  background-color: #f0f2f5;
+  border-radius: 18px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  max-width: 85%;
 }
 
 .message-text-content {
@@ -214,6 +227,8 @@ body {
 .message-text-actions {
   opacity: 0;
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .text-message:hover .message-text-actions {
@@ -228,6 +243,11 @@ body {
   padding: 4px;
   transition: color 0.2s;
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .btn-copy-message:hover {
@@ -266,7 +286,7 @@ body {
 }
 
 .message-content {
-  padding: 12px 15px;
+  padding: 10px 12px;
 }
 
 .message-actions {
@@ -280,7 +300,8 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-gap: 8px;
-  margin-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 .image-grid-item {
