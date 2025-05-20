@@ -1,0 +1,50 @@
+/* Custom styles for File Notes application */
+
+body {
+  padding-top: 20px;
+  background-color: #f8f9fa;
+}
+
+.card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.file-card {
+  transition: transform 0.2s;
+}
+
+.file-card:hover {
+  transform: translateY(-5px);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-danger {
+  background-color: #e74a3b;
+  border-color: #e74a3b;
+}
+
+.file-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.navbar {
+  margin-bottom: 30px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.login-card {
+  max-width: 500px;
+  margin: 50px auto;
+} 

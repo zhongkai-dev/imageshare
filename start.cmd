@@ -1,0 +1,9 @@
+@echo off
+echo Starting File Notes Application...
+npm install
+echo.
+echo Initializing database...
+node initDb.js
+echo.
+echo Running server...
+npm start 
