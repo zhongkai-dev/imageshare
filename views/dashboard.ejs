@@ -25,19 +25,26 @@
             <div class="message-header">
               <strong><%= userId %></strong>
               <small class="text-muted"><%= new Date(group.date).toLocaleString() %></small>
-              <!-- Delete bubble button -->
-              <form action="/files/delete-group/<%= group.groupId %>" method="POST" class="d-inline ms-2 delete-message-form">
-                <button type="submit" class="btn-delete-message" title="Delete message" onclick="return confirm('Delete this entire message?')">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              </form>
+              <div class="message-actions-header">
+                <!-- Delete bubble button -->
+                <form action="/files/delete-group/<%= group.groupId %>" method="POST" class="d-inline delete-message-form">
+                  <button type="submit" class="btn-delete-message" title="Delete message" onclick="return confirm('Delete this entire message?')">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </div>
             </div>
             <div class="message-content">
               <!-- If there's a text message, show it first -->
               <% if (group.messages && group.messages.length > 0) { %>
                 <% group.messages.forEach(message => { %>
                   <div class="text-message mb-3">
-                    <%= message.text %>
+                    <div class="message-text-content"><%= message.text %></div>
+                    <div class="message-text-actions">
+                      <button class="btn-copy-message" onclick="copyMessageText(this)" title="Copy message">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
                   </div>
                 <% }); %>
               <% } %>
@@ -67,29 +74,6 @@
                     <small><%= (group.files[0].size / 1024).toFixed(2) %> KB</small>
                   </div>
                 </div>
-              <!-- For multiple non-image files or mixed content -->
-              <% } else { %>
-                <div class="file-group">
-                  <% group.files.forEach(file => { %>
-                    <div class="file-bubble">
-                      <i class="fas <%= getFileIcon(file.mimetype) %>"></i>
-                      <div class="file-info">
-                        <span><%= file.originalName %></span>
-                        <small><%= (file.size / 1024).toFixed(2) %> KB</small>
-                      </div>
-                      <div class="file-actions">
-                        <a href="/files/download/<%= file._id %>" class="btn btn-sm btn-primary">
-                          <i class="fas fa-download"></i>
-                        </a>
-                        <form action="/files/delete/<%= file._id %>" method="POST" class="d-inline">
-                          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this file?')">
-                            <i class="fas fa-trash-alt"></i>
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  <% }); %>
-                </div>
               <% } %>
               
               <!-- Group-level actions for image groups -->
@@ -108,39 +92,35 @@
       <% }); %>
     <% } else { %>
       <div class="empty-state">
-        <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
-        <h5 class="text-muted">No files uploaded yet</h5>
-        <p>Upload your first file using the options below.</p>
+        <i class="fas fa-comment-alt fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">No messages yet</h5>
+        <p>Start a conversation by sending a message or image below.</p>
       </div>
     <% } %>
     
     <!-- Spacer to ensure last message isn't covered by the upload form -->
-    <div style="height: 15px;"></div>
+    <div style="height: 80px;"></div>
   </div>
   
-  <!-- Upload form with image upload only -->
-  <div class="upload-form">
-    <div class="upload-header mb-2">
-      <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Share Images & Text</h5>
-    </div>
-    
-    <!-- Images Upload Form -->
-    <div id="imagesUploadForm" class="upload-tab-content">
-      <form action="/files/upload-images" method="post" enctype="multipart/form-data">
-        <!-- Text message input -->
-        <div class="form-group mb-2">
-          <input type="text" class="form-control" name="message" placeholder="Type a message (optional)">
-        </div>
-        
-        <div class="input-group">
-          <input type="file" class="form-control" name="images" multiple accept="image/*">
-          <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">Share</button>
+  <!-- Chat input form -->
+  <div class="chat-input-form">
+    <form action="/files/upload-images" method="post" enctype="multipart/form-data" id="chatForm">
+      <div class="input-wrapper">
+        <div class="message-input-container">
+          <input type="text" class="form-control message-input" name="message" placeholder="Type a message..." autocomplete="off">
+          <div class="input-actions">
+            <label for="imageInput" class="btn-attach" title="Attach images">
+              <i class="fas fa-image"></i>
+            </label>
+            <input type="file" id="imageInput" name="images" multiple accept="image/*" style="display: none;" onchange="updateFileLabel()">
+            <span id="fileCount" class="file-count"></span>
           </div>
         </div>
-        <small class="form-text text-muted">You can share images, text, or both together</small>
-      </form>
-    </div>
+        <button type="submit" class="btn btn-primary send-button">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -162,12 +142,41 @@
     chatArea.scrollTop = chatArea.scrollHeight;
     
     // Add submit handlers to show loading indicators
-    document.getElementById('imagesUploadForm').addEventListener('submit', function() {
+    document.getElementById('chatForm').addEventListener('submit', function() {
       const btn = this.querySelector('button[type="submit"]');
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
       btn.disabled = true;
     });
   };
+  
+  // Update file label when files are selected
+  function updateFileLabel() {
+    const input = document.getElementById('imageInput');
+    const fileCount = document.getElementById('fileCount');
+    
+    if (input.files.length > 0) {
+      fileCount.textContent = input.files.length + (input.files.length === 1 ? ' image' : ' images');
+      fileCount.style.display = 'inline-block';
+    } else {
+      fileCount.style.display = 'none';
+    }
+  }
+  
+  // Copy message text to clipboard
+  function copyMessageText(button) {
+    const messageText = button.closest('.text-message').querySelector('.message-text-content').textContent;
+    navigator.clipboard.writeText(messageText).then(() => {
+      // Show a brief "Copied!" tooltip
+      const originalTitle = button.getAttribute('title');
+      button.setAttribute('title', 'Copied!');
+      button.classList.add('copied');
+      
+      setTimeout(() => {
+        button.setAttribute('title', originalTitle);
+        button.classList.remove('copied');
+      }, 1500);
+    });
+  }
   
   // Image preview functionality
   function openImagePreview(src, name) {
