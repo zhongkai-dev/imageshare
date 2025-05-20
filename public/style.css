@@ -225,10 +225,9 @@ body {
 }
 
 .message-text-actions {
-  opacity: 0;
-  transition: opacity 0.2s;
   display: flex;
   align-items: center;
+  opacity: 1;
 }
 
 .text-message:hover .message-text-actions {

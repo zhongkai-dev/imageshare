@@ -138,8 +138,7 @@
 <script>
   // Scroll to bottom of chat on load
   window.onload = function() {
-    const chatArea = document.getElementById('chatArea');
-    chatArea.scrollTop = chatArea.scrollHeight;
+    scrollToBottom();
     
     // Add submit handlers to show loading indicators
     document.getElementById('chatForm').addEventListener('submit', function() {
@@ -148,6 +147,12 @@
       btn.disabled = true;
     });
   };
+  
+  // Function to scroll to bottom of chat
+  function scrollToBottom() {
+    const chatArea = document.getElementById('chatArea');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
   
   // Update file label when files are selected
   function updateFileLabel() {

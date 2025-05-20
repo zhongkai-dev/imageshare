@@ -94,7 +94,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
       files: fileGroups[key].files,
       messages: fileGroups[key].messages,
       date: fileGroups[key].date
-    })).sort((a, b) => b.date - a.date);
+    })).sort((a, b) => a.date - b.date);
     
     // Helper function for file icons
     const getFileIcon = (mimetype) => {
