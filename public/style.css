@@ -129,6 +129,14 @@ body {
   align-items: center;
 }
 
+/* Text message styling */
+.text-message {
+  font-size: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Delete message button styling */
 .btn-delete-message {
   background: transparent;

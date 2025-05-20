@@ -33,6 +33,15 @@
               </form>
             </div>
             <div class="message-content">
+              <!-- If there's a text message, show it first -->
+              <% if (group.messages && group.messages.length > 0) { %>
+                <% group.messages.forEach(message => { %>
+                  <div class="text-message mb-3">
+                    <%= message.text %>
+                  </div>
+                <% }); %>
+              <% } %>
+              
               <!-- If group contains multiple images, show them in a grid -->
               <% if (group.files.length > 1 && group.files.every(file => file.mimetype.startsWith('image/'))) { %>
                 <div class="image-grid <%= group.files.length > 4 ? 'grid-many' : group.files.length > 2 ? 'grid-' + group.files.length : '' %>">
@@ -112,18 +121,24 @@
   <!-- Upload form with image upload only -->
   <div class="upload-form">
     <div class="upload-header mb-2">
-      <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Upload Images</h5>
+      <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Share Images & Text</h5>
     </div>
     
     <!-- Images Upload Form -->
     <div id="imagesUploadForm" class="upload-tab-content">
       <form action="/files/upload-images" method="post" enctype="multipart/form-data">
+        <!-- Text message input -->
+        <div class="form-group mb-2">
+          <input type="text" class="form-control" name="message" placeholder="Type a message (optional)">
+        </div>
+        
         <div class="input-group">
-          <input type="file" class="form-control" name="images" multiple accept="image/*" required>
+          <input type="file" class="form-control" name="images" multiple accept="image/*">
           <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">Upload Images</button>
+            <button type="submit" class="btn btn-primary">Share</button>
           </div>
         </div>
+        <small class="form-text text-muted">You can share images, text, or both together</small>
       </form>
     </div>
   </div>

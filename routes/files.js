@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const File = require('../models/File');
+const { File, Message } = require('../models/File');
 const { v4: uuidv4 } = require('uuid'); // Add UUID for group IDs
 
 // Authentication middleware
@@ -56,23 +56,43 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
     // Get all files for this user
     const allFiles = await File.find({ userId: req.session.userId }).sort({ uploadDate: -1 });
     
-    // Group files by groupId
+    // Get all messages for this user
+    const allMessages = await Message.find({ userId: req.session.userId }).sort({ uploadDate: -1 });
+    
+    // Group files and messages by groupId
     const fileGroups = {};
+    
+    // Process files
     allFiles.forEach(file => {
       const groupId = file.groupId || 'single-' + file._id;
       if (!fileGroups[groupId]) {
         fileGroups[groupId] = {
           files: [],
+          messages: [],
           date: file.uploadDate
         };
       }
       fileGroups[groupId].files.push(file);
     });
     
+    // Process messages
+    allMessages.forEach(message => {
+      const groupId = message.groupId;
+      if (!fileGroups[groupId]) {
+        fileGroups[groupId] = {
+          files: [],
+          messages: [],
+          date: message.uploadDate
+        };
+      }
+      fileGroups[groupId].messages.push(message);
+    });
+    
     // Convert to array and sort by date
     const groupedFiles = Object.keys(fileGroups).map(key => ({
       groupId: key,
       files: fileGroups[key].files,
+      messages: fileGroups[key].messages,
       date: fileGroups[key].date
     })).sort((a, b) => b.date - a.date);
     
@@ -105,7 +125,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
   }
 });
 
-// Upload images
+// Upload images and/or text message
 router.post('/upload-images', isAuthenticated, (req, res) => {
   uploadImages(req, res, async (err) => {
     if (err) {
@@ -114,31 +134,47 @@ router.post('/upload-images', isAuthenticated, (req, res) => {
     }
     
     try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).redirect('/files/dashboard');
-      }
-
-      // Generate a group ID for this batch of files
+      // Generate a group ID for this batch of files/messages
       const groupId = uuidv4();
       
-      // Save each file info to database with the same groupId
-      const filePromises = req.files.map(file => {
-        return File.create({
-          filename: file.filename,
-          originalName: file.originalname,
-          path: file.path,
-          size: file.size,
-          mimetype: file.mimetype,
+      // Check if there's a text message
+      const message = req.body.message ? req.body.message.trim() : '';
+      
+      // Check if there are files or a message
+      if ((!req.files || req.files.length === 0) && !message) {
+        return res.status(400).redirect('/files/dashboard');
+      }
+      
+      // Save message if provided
+      if (message) {
+        await Message.create({
+          text: message,
           userId: req.session.userId,
-          groupId: groupId,
-          fileType: 'image'
+          groupId: groupId
         });
-      });
-
-      await Promise.all(filePromises);
+      }
+      
+      // Save files if provided
+      if (req.files && req.files.length > 0) {
+        const filePromises = req.files.map(file => {
+          return File.create({
+            filename: file.filename,
+            originalName: file.originalname,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            userId: req.session.userId,
+            groupId: groupId,
+            fileType: 'image'
+          });
+        });
+        
+        await Promise.all(filePromises);
+      }
+      
       res.redirect('/files/dashboard');
     } catch (err) {
-      console.error('File upload error:', err);
+      console.error('Upload error:', err);
       res.status(500).redirect('/files/dashboard');
     }
   });
@@ -223,12 +259,7 @@ router.post('/delete/:id', isAuthenticated, async (req, res) => {
 // Delete entire group of files
 router.post('/delete-group/:groupId', isAuthenticated, async (req, res) => {
   try {
-    // Find all files in the group that belong to this user
     const groupId = req.params.groupId;
-    const files = await File.find({ 
-      groupId: groupId,
-      userId: req.session.userId
-    });
     
     // If groupId starts with 'single-', it's a special case for files without a real groupId
     if (groupId.startsWith('single-')) {
@@ -247,8 +278,14 @@ router.post('/delete-group/:groupId', isAuthenticated, async (req, res) => {
         await File.findByIdAndDelete(fileId);
       }
     } else {
+      // Find all files in the group that belong to this user
+      const files = await File.find({ 
+        groupId: groupId,
+        userId: req.session.userId
+      });
+      
       // Delete all files in the group
-      const deletePromises = files.map(file => {
+      const deleteFilePromises = files.map(file => {
         // Delete file from disk
         if (fs.existsSync(file.path)) {
           fs.unlinkSync(file.path);
@@ -257,7 +294,14 @@ router.post('/delete-group/:groupId', isAuthenticated, async (req, res) => {
         return File.findByIdAndDelete(file._id);
       });
       
-      await Promise.all(deletePromises);
+      // Delete all messages in the group
+      const deleteMessagePromises = Message.deleteMany({
+        groupId: groupId,
+        userId: req.session.userId
+      });
+      
+      // Wait for all deletions to complete
+      await Promise.all([...deleteFilePromises, deleteMessagePromises]);
     }
     
     res.redirect('/files/dashboard');

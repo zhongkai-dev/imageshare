@@ -40,4 +40,31 @@ const FileSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('File', FileSchema, 'userfiles');
+// Create a schema for messages
+const MessageSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true
+  },
+  userId: {
+    type: String,
+    required: true,
+    ref: 'User'
+  },
+  groupId: {
+    type: String,
+    required: true
+  },
+  uploadDate: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const File = mongoose.model('File', FileSchema, 'userfiles');
+const Message = mongoose.model('Message', MessageSchema, 'messages');
+
+module.exports = {
+  File,
+  Message
+};
