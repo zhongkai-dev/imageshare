@@ -4,10 +4,20 @@
     <a class="navbar-brand" href="#">Image Share</a>
     <div class="ms-auto">
       <span class="badge bg-primary me-2">User ID: <%= userId %></span>
+      <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;">
+        <i class="fas fa-download me-1"></i> Install App
+      </button>
       <a href="/auth/logout" class="btn btn-outline-danger btn-sm">Logout</a>
     </div>
   </div>
 </nav>
+
+<!-- Offline notification -->
+<div id="offlineAlert" class="offline-alert" style="display: none;">
+  <div class="container">
+    <i class="fas fa-wifi-slash me-2"></i> You're offline. Some features may be limited.
+  </div>
+</div>
 
 <div class="chat-container">
   <!-- Chat area -->
@@ -252,12 +262,81 @@
       }
     });
     
-    // Handle PWA install prompt for iOS
+    // Handle PWA installation
+    let deferredPrompt;
+    const installButton = document.getElementById('installButton');
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Show the install button
+      installButton.style.display = 'inline-block';
+    });
+    
+    installButton.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        return;
+      }
+      // Show the installation prompt
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      // Hide the install button regardless of outcome
+      installButton.style.display = 'none';
+      // We no longer need the prompt
+      deferredPrompt = null;
+    });
+    
+    // Handle iOS install prompt
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
     
-    if (isIOS && !isInStandaloneMode) {
-      document.getElementById('iosInstallMessage').style.display = 'block';
+    if (isIOS && !isInStandaloneMode && !localStorage.getItem('pwaInstallPromptShown')) {
+      // Create a custom installation prompt for iOS
+      const iosPrompt = document.createElement('div');
+      iosPrompt.className = 'pwa-install-prompt';
+      iosPrompt.innerHTML = `
+        <div class="pwa-install-prompt-icon">
+          <i class="fas fa-mobile-alt"></i>
+        </div>
+        <div class="pwa-install-prompt-text">
+          <div class="pwa-install-prompt-title">Add to Home Screen</div>
+          <div>Install this app on your device for quick access.</div>
+          <div class="pwa-install-prompt-actions">
+            <button class="btn btn-sm btn-outline-secondary" id="iosDismissBtn">Not Now</button>
+            <button class="btn btn-sm btn-primary" id="iosInstallBtn">How to Install</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(iosPrompt);
+      
+      // Handle iOS prompt buttons
+      document.getElementById('iosDismissBtn').addEventListener('click', () => {
+        iosPrompt.remove();
+        localStorage.setItem('pwaInstallPromptShown', 'true');
+      });
+      
+      document.getElementById('iosInstallBtn').addEventListener('click', () => {
+        alert('To install: tap the Share button in Safari and then "Add to Home Screen"');
+        localStorage.setItem('pwaInstallPromptShown', 'true');
+      });
     }
+    
+    // Offline detection
+    const offlineAlert = document.getElementById('offlineAlert');
+    
+    function updateOnlineStatus() {
+      if (navigator.onLine) {
+        offlineAlert.style.display = 'none';
+      } else {
+        offlineAlert.style.display = 'block';
+      }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus(); // Initial check
   });
 </script> 

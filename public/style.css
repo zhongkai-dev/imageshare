@@ -465,4 +465,55 @@ body {
   .chat-container {
     height: calc(100vh - 70px - 30px); /* Adjust for iOS toolbar */
   }
+}
+
+/* Offline notification */
+.offline-alert {
+  background-color: #e74a3b;
+  color: white;
+  padding: 8px 0;
+  text-align: center;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+/* PWA install prompt */
+.pwa-install-prompt {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  max-width: 90%;
+  z-index: 1050;
+}
+
+.pwa-install-prompt-icon {
+  font-size: 24px;
+  margin-right: 15px;
+  color: #4e73df;
+}
+
+.pwa-install-prompt-text {
+  flex: 1;
+}
+
+.pwa-install-prompt-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.pwa-install-prompt-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
 } 
