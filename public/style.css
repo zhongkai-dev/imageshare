@@ -741,9 +741,91 @@ body {
 
 /* Prevent image dragging */
 img {
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  user-drag: none;
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Safari */
+  -khtml-user-select: none;    /* Konqueror HTML */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* IE/Edge */
+  user-select: none;           /* Chrome, Opera */
+  pointer-events: auto;        /* Enable click events */
+}
+
+/* Blue selection prevention */
+::selection {
+  background: transparent;
+}
+
+::-moz-selection {
+  background: transparent;
+}
+
+/* Adjust spacing for footer */
+.chat-area {
+  padding-bottom: 120px !important;
+}
+
+/* Ensure footer doesn't overlap content on mobile */
+@media (max-width: 768px) {
+  .chat-area {
+    padding-bottom: 150px !important;
+  }
+}
+
+/* Global font family */
+body, input, button, textarea, select {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Nav logo styling - make circular */
+.navbar-logo {
+  height: 30px;
+  width: 30px;
+  margin-right: 8px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e9ecef;
+}
+
+/* Dev label in navbar */
+.dev-label {
+  font-size: 12px;
+  color: #6c757d;
+  padding: 3px 7px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+/* Footer styling */
+.app-footer {
+  background-color: #f8f9fa;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 12px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #e9ecef;
+  z-index: 10;
+}
+
+.developer-info {
+  color: #6c757d;
+}
+
+.developer-info a {
+  color: #4e73df;
+  text-decoration: none;
+}
+
+.developer-info a:hover {
+  text-decoration: underline;
+}
+
+/* Footer styling */
+.developer-info .dev-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #4e73df;
 } 

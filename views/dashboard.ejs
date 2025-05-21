@@ -1,7 +1,13 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
   <div class="container">
-    <a class="navbar-brand" href="#">Image Share</a>
+    <div class="d-flex align-items-center">
+      <a class="navbar-brand" href="#">
+        <img src="/icons/logo.png" alt="My Fen" class="navbar-logo">
+        My Fen
+      </a>
+      <span class="dev-label">Dev ZK</span>
+    </div>
     <div class="ms-auto">
       <span class="badge bg-primary me-2">User ID: <%= userId %></span>
       <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;">
@@ -620,7 +626,7 @@
     });
   });
 
-  // Show loader when copying images
+  // Show copy animation with shorter duration
   function copyCurrentImage(event) {
     if (event) {
       event.stopPropagation();
@@ -653,13 +659,13 @@
         // Write to clipboard
         navigator.clipboard.write([data])
           .then(() => {
-            // Show success feedback
+            // Show success feedback with shorter animation
             copyBtn.innerHTML = '<i class="fas fa-check"></i>';
             
-            // Reset after 1.5 seconds
+            // Reset after 500ms (shorter duration)
             setTimeout(() => {
               copyBtn.innerHTML = originalHTML;
-            }, 1500);
+            }, 500);
           })
           .catch(err => {
             console.error('Error copying image to clipboard:', err);
@@ -681,13 +687,13 @@
         tempLink.click();
         document.body.removeChild(tempLink);
         
-        // Show download message
+        // Show download message with shorter animation
         copyBtn.innerHTML = '<i class="fas fa-download"></i>';
         
-        // Reset after 1.5 seconds
+        // Reset after 500ms (shorter duration)
         setTimeout(() => {
           copyBtn.innerHTML = originalHTML;
-        }, 1500);
+        }, 500);
       } catch (err) {
         console.error('Error downloading image:', err);
         alert('Could not copy image. Please try right-clicking and selecting "Copy Image" or "Save Image As".');
