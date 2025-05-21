@@ -66,7 +66,7 @@
                     <div class="image-grid-item">
                       <img src="/files/view/<%= file._id %>" alt="<%= file.originalName %>" 
                           class="img-thumbnail chat-img" 
-                          onclick="openImagePreview('/files/view/<%= file._id %>', '<%= file.originalName %>')">
+                          onclick="openImagePreview('/files/view/<%= file._id %>', '<%= file.originalName %>', this)">
                     </div>
                   <% }); %>
                 </div>
@@ -78,7 +78,7 @@
                 <div class="image-preview">
                   <img src="/files/view/<%= group.files[0]._id %>" alt="<%= group.files[0].originalName %>" 
                       class="img-thumbnail chat-img" 
-                      onclick="openImagePreview('/files/view/<%= group.files[0]._id %>', '<%= group.files[0].originalName %>')">
+                      onclick="openImagePreview('/files/view/<%= group.files[0]._id %>', '<%= group.files[0].originalName %>', this)">
                   <div class="file-info">
                     <span><%= group.files[0].originalName %></span>
                     <small><%= (group.files[0].size / 1024).toFixed(2) %> KB</small>
@@ -135,13 +135,24 @@
 </div>
 
 <!-- Image Preview Modal -->
-<div class="image-preview-overlay" id="imagePreviewOverlay" onclick="closeImagePreview()">
+<div class="image-preview-overlay" id="imagePreviewOverlay" onclick="closeImagePreview(event)">
   <div class="image-preview-container">
     <div class="image-preview-header">
       <span id="previewImageName"></span>
-      <button class="close-btn" onclick="closeImagePreview()">×</button>
+      <button class="close-btn" onclick="closeImagePreview(event)">×</button>
     </div>
-    <img id="previewImage" class="preview-image" src="" alt="Preview">
+    <div class="image-preview-content">
+      <button class="nav-btn prev-btn" id="prevImageBtn" onclick="navigateImage(-1, event)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <img id="previewImage" class="preview-image" src="" alt="Preview">
+      <button class="nav-btn next-btn" id="nextImageBtn" onclick="navigateImage(1, event)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+    <div class="image-preview-counter">
+      <span id="imageCounter">1/1</span>
+    </div>
   </div>
 </div>
 
@@ -236,18 +247,105 @@
   }
   
   // Image preview functionality
-  function openImagePreview(src, name) {
+  let currentImageIndex = 0;
+  let galleryImages = [];
+  
+  function openImagePreview(src, name, imageElement) {
     document.getElementById('previewImage').src = src;
     document.getElementById('previewImageName').innerText = name;
     document.getElementById('imagePreviewOverlay').style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    
+    // Get all images in the current group
+    const messageContainer = imageElement.closest('.message-container');
+    if (messageContainer) {
+      galleryImages = Array.from(messageContainer.querySelectorAll('.chat-img, .image-grid-item img'));
+      currentImageIndex = galleryImages.indexOf(imageElement);
+      updateImageCounter();
+      updateNavigationButtons();
+    } else {
+      galleryImages = [imageElement];
+      currentImageIndex = 0;
+      updateImageCounter();
+      updateNavigationButtons();
+    }
+    
     event.stopPropagation();
   }
   
-  function closeImagePreview() {
+  function closeImagePreview(event) {
+    event.stopPropagation();
     document.getElementById('imagePreviewOverlay').style.display = 'none';
     document.body.style.overflow = 'auto';
   }
+  
+  function navigateImage(direction, event) {
+    event.stopPropagation();
+    if (galleryImages.length <= 1) return;
+    
+    currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+    const newImage = galleryImages[currentImageIndex];
+    
+    document.getElementById('previewImage').src = newImage.src;
+    document.getElementById('previewImageName').innerText = newImage.alt || 'Image Preview';
+    
+    updateImageCounter();
+  }
+  
+  function updateImageCounter() {
+    const counter = document.getElementById('imageCounter');
+    counter.innerText = `${currentImageIndex + 1}/${galleryImages.length}`;
+  }
+  
+  function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevImageBtn');
+    const nextBtn = document.getElementById('nextImageBtn');
+    
+    if (galleryImages.length <= 1) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+    } else {
+      prevBtn.style.display = 'flex';
+      nextBtn.style.display = 'flex';
+    }
+  }
+  
+  // Add touch swipe support for mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  document.getElementById('previewImage').addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+  
+  document.getElementById('previewImage').addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, false);
+  
+  function handleSwipe() {
+    const swipeThreshold = 50; // Minimum distance to consider as swipe
+    if (touchEndX < touchStartX - swipeThreshold) {
+      // Swipe left - go to next image
+      navigateImage(1, new Event('touchend'));
+    } else if (touchEndX > touchStartX + swipeThreshold) {
+      // Swipe right - go to previous image
+      navigateImage(-1, new Event('touchend'));
+    }
+  }
+  
+  // Add keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (document.getElementById('imagePreviewOverlay').style.display === 'flex') {
+      if (e.key === 'ArrowLeft') {
+        navigateImage(-1, new Event('keydown'));
+      } else if (e.key === 'ArrowRight') {
+        navigateImage(1, new Event('keydown'));
+      } else if (e.key === 'Escape') {
+        closeImagePreview(new Event('keydown'));
+      }
+    }
+  });
   
   // Helper function for file icons
   function getFileIcon(mimetype) {
@@ -281,26 +379,23 @@
   document.addEventListener('DOMContentLoaded', function() {
     // Handle image clicks for preview
     document.querySelectorAll('.chat-img, .image-grid-item img').forEach(img => {
-      img.addEventListener('click', function() {
-        const overlay = document.getElementById('imagePreviewOverlay');
-        const previewImage = document.getElementById('previewImage');
-        const imageTitle = document.getElementById('imageTitle');
-        
-        previewImage.src = this.src;
-        imageTitle.textContent = this.alt || 'Image Preview';
-        overlay.style.display = 'flex';
+      img.addEventListener('click', function(e) {
+        e.preventDefault();
+        const src = this.src;
+        const alt = this.alt || 'Image Preview';
+        openImagePreview(src, alt, this);
       });
     });
     
     // Close preview on button click
-    document.getElementById('closePreview').addEventListener('click', function() {
-      document.getElementById('imagePreviewOverlay').style.display = 'none';
+    document.getElementById('closePreview')?.addEventListener('click', function(e) {
+      closeImagePreview(e);
     });
     
     // Close preview on overlay click
     document.getElementById('imagePreviewOverlay').addEventListener('click', function(e) {
       if (e.target === this) {
-        this.style.display = 'none';
+        closeImagePreview(e);
       }
     });
     
