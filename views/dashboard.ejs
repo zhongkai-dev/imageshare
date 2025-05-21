@@ -138,16 +138,16 @@
 
 <!-- Image Preview Overlay -->
 <div id="imagePreviewOverlay" onclick="closeImagePreview(event)">
-  <div class="image-preview-container" onclick="event.stopPropagation()">
+  <div class="image-preview-container">
     <img id="previewImage" src="" alt="Preview">
     <div class="preview-controls" id="previewControls">
       <button class="nav-btn prev-btn" onclick="navigateImage(-1, event)">❮</button>
+      <button class="nav-btn copy-btn" onclick="copyCurrentImage(event)" title="Copy image">
+        <i class="fas fa-copy"></i>
+      </button>
       <button class="nav-btn next-btn" onclick="navigateImage(1, event)">❯</button>
     </div>
-    <div class="preview-info">
-      <span id="imageCounter">1/1</span>
-      <button class="close-btn" onclick="closeImagePreview(event)">&times;</button>
-    </div>
+    <span id="imageCounter" class="image-counter">1/1</span>
   </div>
 </div>
 
@@ -253,11 +253,14 @@
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     const previewImage = document.getElementById('previewImage');
     const previewControls = document.getElementById('previewControls');
+    const imageCounter = document.getElementById('imageCounter');
     
-    // Hide controls after 1 second
+    // Hide controls and counter after 1 second
     previewControls.classList.remove('hide');
+    imageCounter.classList.remove('hide');
     setTimeout(() => {
       previewControls.classList.add('hide');
+      imageCounter.classList.add('hide');
     }, 1000);
     
     // Set the preview image
@@ -301,11 +304,21 @@
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     const previewImage = document.getElementById('previewImage');
     const previewControls = document.getElementById('previewControls');
+    const imageCounter = document.getElementById('imageCounter');
     
-    // Show controls and hide after 1 second
+    // Show controls and counter, hide after 1 second
     previewControls.classList.remove('hide');
-    setTimeout(() => {
+    imageCounter.classList.remove('hide');
+    
+    // Clear any existing timeout
+    if (window.previewTimeout) {
+      clearTimeout(window.previewTimeout);
+    }
+    
+    // Set new timeout
+    window.previewTimeout = setTimeout(() => {
       previewControls.classList.add('hide');
+      imageCounter.classList.add('hide');
     }, 1000);
     
     // Get all image elements
@@ -411,6 +424,27 @@
     }
   });
   
+  // Show controls and counter when mouse moves
+  document.getElementById('imagePreviewOverlay').addEventListener('mousemove', function() {
+    const previewControls = document.getElementById('previewControls');
+    const imageCounter = document.getElementById('imageCounter');
+    
+    // Show both elements
+    previewControls.classList.remove('hide');
+    imageCounter.classList.remove('hide');
+    
+    // Clear any existing timeout
+    if (window.previewTimeout) {
+      clearTimeout(window.previewTimeout);
+    }
+    
+    // Set a new timeout
+    window.previewTimeout = setTimeout(() => {
+      previewControls.classList.add('hide');
+      imageCounter.classList.add('hide');
+    }, 1000);
+  });
+  
   // Helper function for file icons
   function getFileIcon(mimetype) {
     if (mimetype.startsWith('image/')) return 'fa-file-image text-primary';
@@ -439,31 +473,28 @@
     }
   }
 
-  // Image preview functionality
+  // Document ready function
   document.addEventListener('DOMContentLoaded', function() {
-    const previewOverlay = document.getElementById('imagePreviewOverlay');
-    const previewImage = document.getElementById('previewImage');
-    
-    // Handle image clicks for preview
+    // Set up image preview
     document.querySelectorAll('.chat-img, .image-grid-item img').forEach(img => {
       img.addEventListener('click', function(e) {
         e.preventDefault();
-        const src = this.src;
-        const alt = this.alt || 'Image Preview';
         openImagePreview(e, this);
       });
     });
     
-    // Close preview on button click
-    document.getElementById('closePreview')?.addEventListener('click', function(e) {
-      closeImagePreview(e);
+    // Enable right-click and context menu on preview image
+    document.getElementById('previewImage').addEventListener('contextmenu', function(e) {
+      // Allow default context menu to enable "Copy Image"
+      e.stopPropagation();
+      return true;
     });
     
-    // Close preview on overlay click
-    previewOverlay.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeImagePreview(e);
-      }
+    // Prevent buttons from closing the preview when clicked
+    document.querySelectorAll('.nav-btn').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
     });
     
     // Handle PWA installation
@@ -543,26 +574,80 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus(); // Initial check
   });
-  
-  // Enable right-click and context menu on preview image
-  document.getElementById('previewImage').addEventListener('contextmenu', function(e) {
-    // Allow default context menu to enable "Copy Image"
-    // This ensures the browser's native image copy functionality works
-    e.stopPropagation();
-    return true;
-  });
-  
-  // Show controls when mouse moves
-  document.getElementById('imagePreviewOverlay').addEventListener('mousemove', function() {
-    const previewControls = document.getElementById('previewControls');
-    previewControls.classList.remove('hide');
+
+  // Function to copy the current image
+  function copyCurrentImage(event) {
+    if (event) {
+      event.stopPropagation();
+    }
     
-    // Clear any existing timeout
-    if (this.timeout) clearTimeout(this.timeout);
+    const previewImage = document.getElementById('previewImage');
     
-    // Set a new timeout
-    this.timeout = setTimeout(() => {
-      previewControls.classList.add('hide');
-    }, 1000);
-  });
+    // Show copy animation regardless of success
+    const copyBtn = document.querySelector('.copy-btn');
+    const originalHTML = copyBtn.innerHTML;
+    
+    // Try using modern Clipboard API first
+    if (navigator.clipboard && navigator.clipboard.write) {
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas dimensions to match the image
+      canvas.width = previewImage.naturalWidth;
+      canvas.height = previewImage.naturalHeight;
+      
+      // Draw the image on the canvas
+      ctx.drawImage(previewImage, 0, 0);
+      
+      // Convert canvas to blob
+      canvas.toBlob(function(blob) {
+        // Create a new ClipboardItem
+        const data = new ClipboardItem({ 'image/png': blob });
+        
+        // Write to clipboard
+        navigator.clipboard.write([data])
+          .then(() => {
+            // Show success feedback
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            
+            // Reset after 1.5 seconds
+            setTimeout(() => {
+              copyBtn.innerHTML = originalHTML;
+            }, 1500);
+          })
+          .catch(err => {
+            console.error('Error copying image to clipboard:', err);
+            fallbackCopyMethod();
+          });
+      });
+    } else {
+      fallbackCopyMethod();
+    }
+    
+    // Fallback method using select and copy commands
+    function fallbackCopyMethod() {
+      try {
+        // Create a temporary link element
+        const tempLink = document.createElement('a');
+        tempLink.href = previewImage.src;
+        tempLink.download = 'image.jpg';
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        
+        // Show download message
+        copyBtn.innerHTML = '<i class="fas fa-download"></i>';
+        
+        // Reset after 1.5 seconds
+        setTimeout(() => {
+          copyBtn.innerHTML = originalHTML;
+        }, 1500);
+      } catch (err) {
+        console.error('Error downloading image:', err);
+        alert('Could not copy image. Please try right-clicking and selecting "Copy Image" or "Save Image As".');
+        copyBtn.innerHTML = originalHTML;
+      }
+    }
+  }
 </script> 

@@ -401,8 +401,14 @@ body {
 
 .preview-image {
   max-width: 100%;
-  max-height: 85vh;
+  max-height: 100vh; /* Full viewport height */
+  width: auto;
+  height: auto;
   object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  -webkit-user-drag: none; /* Prevent dragging */
+  pointer-events: auto; /* Allow interaction for copying */
 }
 
 .close-btn {
@@ -612,6 +618,8 @@ body {
   object-fit: contain;
   display: block;
   margin: 0 auto;
+  -webkit-user-drag: none; /* Prevent dragging */
+  pointer-events: auto; /* Allow interaction for copying */
 }
 
 .preview-controls {
@@ -680,4 +688,37 @@ body {
 
 .close-btn:hover {
   opacity: 1;
+}
+
+.image-counter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 1600;
+  transition: opacity 0.5s ease;
+  opacity: 1;
+}
+
+.image-counter.hide {
+  opacity: 0;
+}
+
+.copy-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+}
+
+.copy-btn:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #4e73df;
 } 
