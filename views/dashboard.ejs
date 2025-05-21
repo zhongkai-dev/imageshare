@@ -151,6 +151,14 @@
   </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loader-container">
+    <div class="spinner"></div>
+    <div class="loader-text">Loading...</div>
+  </div>
+</div>
+
 <script>
   // Scroll to bottom of chat on load
   window.onload = function() {
@@ -245,25 +253,51 @@
   let currentImageIndex = 0;
   let galleryImages = [];
   
+  // Loading functions
+  function showLoader(message = "Loading...") {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loaderText = loadingOverlay.querySelector('.loader-text');
+    loaderText.textContent = message;
+    loadingOverlay.style.display = 'flex';
+  }
+  
+  function hideLoader() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    loadingOverlay.style.display = 'none';
+  }
+  
   function openImagePreview(event, img) {
     if (event) {
       event.stopPropagation();
     }
+    
+    // Show loading indicator
+    showLoader("Loading image...");
     
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     const previewImage = document.getElementById('previewImage');
     const previewControls = document.getElementById('previewControls');
     const imageCounter = document.getElementById('imageCounter');
     
-    // Hide controls and counter after 1 second
-    previewControls.classList.remove('hide');
-    imageCounter.classList.remove('hide');
-    setTimeout(() => {
-      previewControls.classList.add('hide');
-      imageCounter.classList.add('hide');
-    }, 1000);
+    // Set up image loaded handler
+    previewImage.onload = function() {
+      // Hide loader once image is loaded
+      hideLoader();
+      
+      // Show the overlay
+      previewOverlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent scrolling when preview is open
+      
+      // Hide controls and counter after 1 second
+      previewControls.classList.remove('hide');
+      imageCounter.classList.remove('hide');
+      setTimeout(() => {
+        previewControls.classList.add('hide');
+        imageCounter.classList.add('hide');
+      }, 1000);
+    };
     
-    // Set the preview image
+    // Set the preview image (this will trigger the onload event)
     previewImage.src = img.src;
     
     // Calculate total images and current position
@@ -281,10 +315,6 @@
     
     // Update counter
     updateImageCounter(currentIndex, visibleImages.length);
-    
-    // Show the overlay
-    previewOverlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Prevent scrolling when preview is open
     
     // Remember current state for navigation
     previewOverlay.dataset.currentIndex = currentIndex;
@@ -306,21 +336,6 @@
     const previewControls = document.getElementById('previewControls');
     const imageCounter = document.getElementById('imageCounter');
     
-    // Show controls and counter, hide after 1 second
-    previewControls.classList.remove('hide');
-    imageCounter.classList.remove('hide');
-    
-    // Clear any existing timeout
-    if (window.previewTimeout) {
-      clearTimeout(window.previewTimeout);
-    }
-    
-    // Set new timeout
-    window.previewTimeout = setTimeout(() => {
-      previewControls.classList.add('hide');
-      imageCounter.classList.add('hide');
-    }, 1000);
-    
     // Get all image elements
     const allImages = Array.from(document.querySelectorAll('.img-thumbnail'));
     const visibleImages = allImages.filter(img => img.offsetParent !== null);
@@ -341,9 +356,35 @@
       return; // Don't proceed if already at last image
     }
     
+    // Show loading indicator
+    showLoader("Loading image...");
+    
     // Set the new image and update counter
     if (visibleImages[newIndex]) {
+      // Set up image loaded handler
+      previewImage.onload = function() {
+        // Hide loader once image is loaded
+        hideLoader();
+        
+        // Show controls and counter, hide after 1 second
+        previewControls.classList.remove('hide');
+        imageCounter.classList.remove('hide');
+        
+        // Clear any existing timeout
+        if (window.previewTimeout) {
+          clearTimeout(window.previewTimeout);
+        }
+        
+        // Set new timeout
+        window.previewTimeout = setTimeout(() => {
+          previewControls.classList.add('hide');
+          imageCounter.classList.add('hide');
+        }, 1000);
+      };
+      
+      // Set the new image (this will trigger the onload event)
       previewImage.src = visibleImages[newIndex].src;
+      
       updateImageCounter(newIndex, totalImages);
       
       // Update current index
@@ -573,13 +614,58 @@
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus(); // Initial check
+    
+    // Add loading indicator for form submissions
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        // Don't show loader for delete confirmations that are cancelled
+        if (this.action.includes('delete') && !window.lastDeleteConfirmed) {
+          e.preventDefault();
+          return false;
+        }
+        
+        // Show loader with appropriate message based on form action
+        let message = "Processing...";
+        
+        if (this.action.includes('upload')) {
+          message = "Uploading Files...";
+          // Check if files are actually selected for upload forms
+          const fileInput = this.querySelector('input[type="file"]');
+          if (fileInput && fileInput.files.length === 0 && !this.querySelector('input[name="message"]').value) {
+            e.preventDefault();
+            return false;
+          }
+        } else if (this.action.includes('delete')) {
+          message = "Deleting...";
+        }
+        
+        showLoader(message);
+        return true;
+      });
+    });
+    
+    // Handle delete confirmation
+    document.querySelectorAll('button[onclick*="confirm"]').forEach(button => {
+      const originalOnClick = button.getAttribute('onclick');
+      
+      button.setAttribute('onclick', '');
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.lastDeleteConfirmed = confirm('Are you sure you want to delete this?');
+        if (window.lastDeleteConfirmed) {
+          this.closest('form').submit();
+        }
+      });
+    });
   });
 
-  // Function to copy the current image
+  // Show loader when copying images
   function copyCurrentImage(event) {
     if (event) {
       event.stopPropagation();
     }
+    
+    showLoader("Copying image...");
     
     const previewImage = document.getElementById('previewImage');
     
@@ -608,6 +694,9 @@
         // Write to clipboard
         navigator.clipboard.write([data])
           .then(() => {
+            // Hide loader
+            hideLoader();
+            
             // Show success feedback
             copyBtn.innerHTML = '<i class="fas fa-check"></i>';
             
@@ -618,10 +707,12 @@
           })
           .catch(err => {
             console.error('Error copying image to clipboard:', err);
+            hideLoader();
             fallbackCopyMethod();
           });
       });
     } else {
+      hideLoader();
       fallbackCopyMethod();
     }
     
