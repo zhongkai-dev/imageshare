@@ -193,14 +193,19 @@ router.get('/view/:id', isAuthenticated, async (req, res) => {
       return res.status(403).send('Unauthorized');
     }
     
-    const filePath = path.join(process.cwd(), 'uploads', file._id.toString());
+    // Use the actual file path from the database
+    if (!fs.existsSync(file.path)) {
+      console.error(`File not found on disk: ${file.path}`);
+      return res.status(404).send('File not found on disk');
+    }
+    
     res.setHeader('Content-Type', file.mimetype);
     res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`);
     
     // Add cache control headers for better performance
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     
-    fs.createReadStream(filePath).pipe(res);
+    fs.createReadStream(file.path).pipe(res);
   } catch (err) {
     console.error('Error viewing file:', err);
     res.status(500).send('Server error');
