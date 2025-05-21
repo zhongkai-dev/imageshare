@@ -156,12 +156,54 @@
       btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
       btn.disabled = true;
     });
+    
+    // Handle virtual keyboard on mobile devices
+    const messageInput = document.querySelector('.message-input');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // When the input is focused (keyboard appears)
+      messageInput.addEventListener('focus', function() {
+        document.body.classList.add('keyboard-open');
+        // Small delay to ensure the keyboard is fully open
+        setTimeout(function() {
+          ensureInputVisible();
+          scrollToBottom();
+        }, 300);
+      });
+      
+      // Also ensure visibility when typing
+      messageInput.addEventListener('input', ensureInputVisible);
+      
+      // When the input loses focus (keyboard disappears)
+      messageInput.addEventListener('blur', function() {
+        document.body.classList.remove('keyboard-open');
+      });
+      
+      // Detect iOS keyboard
+      window.addEventListener('resize', function() {
+        if (document.activeElement === messageInput) {
+          // Keyboard is likely open
+          document.body.classList.add('keyboard-open');
+          setTimeout(scrollToBottom, 300);
+        }
+      });
+    }
   };
   
   // Function to scroll to bottom of chat
   function scrollToBottom() {
     const chatArea = document.getElementById('chatArea');
     chatArea.scrollTop = chatArea.scrollHeight;
+  }
+  
+  // Function to ensure the input is visible when typing
+  function ensureInputVisible() {
+    // Scroll to the input field
+    const inputField = document.querySelector('.message-input');
+    if (inputField) {
+      inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
   
   // Update file label when files are selected
