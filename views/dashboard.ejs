@@ -151,14 +151,6 @@
   </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay">
-  <div class="loader-container">
-    <div class="spinner"></div>
-    <div class="loader-text">Loading...</div>
-  </div>
-</div>
-
 <script>
   // Scroll to bottom of chat on load
   window.onload = function() {
@@ -253,26 +245,10 @@
   let currentImageIndex = 0;
   let galleryImages = [];
   
-  // Loading functions
-  function showLoader(message = "Loading...") {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loaderText = loadingOverlay.querySelector('.loader-text');
-    loaderText.textContent = message;
-    loadingOverlay.style.display = 'flex';
-  }
-  
-  function hideLoader() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    loadingOverlay.style.display = 'none';
-  }
-  
   function openImagePreview(event, img) {
     if (event) {
       event.stopPropagation();
     }
-    
-    // Show loading indicator
-    showLoader("Loading image...");
     
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     const previewImage = document.getElementById('previewImage');
@@ -281,9 +257,6 @@
     
     // Set up image loaded handler
     previewImage.onload = function() {
-      // Hide loader once image is loaded
-      hideLoader();
-      
       // Show the overlay
       previewOverlay.style.display = 'flex';
       document.body.style.overflow = 'hidden'; // Prevent scrolling when preview is open
@@ -356,16 +329,10 @@
       return; // Don't proceed if already at last image
     }
     
-    // Show loading indicator
-    showLoader("Loading image...");
-    
     // Set the new image and update counter
     if (visibleImages[newIndex]) {
       // Set up image loaded handler
       previewImage.onload = function() {
-        // Hide loader once image is loaded
-        hideLoader();
-        
         // Show controls and counter, hide after 1 second
         previewControls.classList.remove('hide');
         imageCounter.classList.remove('hide');
@@ -615,31 +582,25 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus(); // Initial check
     
-    // Add loading indicator for form submissions
+    // Add form submission handlers
     document.querySelectorAll('form').forEach(form => {
       form.addEventListener('submit', function(e) {
-        // Don't show loader for delete confirmations that are cancelled
+        // Don't submit for delete confirmations that are cancelled
         if (this.action.includes('delete') && !window.lastDeleteConfirmed) {
           e.preventDefault();
           return false;
         }
         
-        // Show loader with appropriate message based on form action
-        let message = "Processing...";
-        
+        // Check for upload forms
         if (this.action.includes('upload')) {
-          message = "Uploading Files...";
           // Check if files are actually selected for upload forms
           const fileInput = this.querySelector('input[type="file"]');
           if (fileInput && fileInput.files.length === 0 && !this.querySelector('input[name="message"]').value) {
             e.preventDefault();
             return false;
           }
-        } else if (this.action.includes('delete')) {
-          message = "Deleting...";
         }
         
-        showLoader(message);
         return true;
       });
     });
@@ -664,8 +625,6 @@
     if (event) {
       event.stopPropagation();
     }
-    
-    showLoader("Copying image...");
     
     const previewImage = document.getElementById('previewImage');
     
@@ -694,9 +653,6 @@
         // Write to clipboard
         navigator.clipboard.write([data])
           .then(() => {
-            // Hide loader
-            hideLoader();
-            
             // Show success feedback
             copyBtn.innerHTML = '<i class="fas fa-check"></i>';
             
@@ -707,12 +663,10 @@
           })
           .catch(err => {
             console.error('Error copying image to clipboard:', err);
-            hideLoader();
             fallbackCopyMethod();
           });
       });
     } else {
-      hideLoader();
       fallbackCopyMethod();
     }
     
