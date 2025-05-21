@@ -319,11 +319,13 @@
     // Calculate the new index
     let newIndex = currentIndex + direction;
     
-    // Handle wrapping around
+    // Stop at boundaries instead of wrapping around
     if (newIndex < 0) {
-      newIndex = visibleImages.length - 1;
+      newIndex = 0; // Stop at first image
+      return; // Don't proceed if already at first image
     } else if (newIndex >= visibleImages.length) {
-      newIndex = 0;
+      newIndex = visibleImages.length - 1; // Stop at last image
+      return; // Don't proceed if already at last image
     }
     
     // Set the new image and update counter
@@ -336,15 +338,15 @@
     }
   }
   
-  // Add mouse wheel navigation with reversed direction
+  // Add mouse wheel navigation with specified direction
   document.getElementById('imagePreviewOverlay').addEventListener('wheel', function(e) {
     e.preventDefault(); // Prevent page scrolling
     if (e.deltaY > 0) {
-      // Scrolling down - go to previous image
-      navigateImage(-1, e);
-    } else {
-      // Scrolling up - go to next image
+      // Scrolling down - go to next image
       navigateImage(1, e);
+    } else {
+      // Scrolling up - go to previous image
+      navigateImage(-1, e);
     }
   });
   
