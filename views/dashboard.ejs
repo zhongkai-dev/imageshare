@@ -140,12 +140,12 @@
 <div id="imagePreviewOverlay" onclick="closeImagePreview(event)">
   <div class="image-preview-container" onclick="event.stopPropagation()">
     <img id="previewImage" src="" alt="Preview">
-    <div class="preview-controls">
-      <button class="nav-btn prev-btn" onclick="navigateImage(-1, event)">&#10094;</button>
-      <button class="nav-btn next-btn" onclick="navigateImage(1, event)">&#10095;</button>
+    <div class="preview-controls" id="previewControls">
+      <button class="nav-btn prev-btn" onclick="navigateImage(-1, event)">❮</button>
+      <button class="nav-btn next-btn" onclick="navigateImage(1, event)">❯</button>
     </div>
     <div class="preview-info">
-      <span id="previewName"></span>
+      <span id="imageCounter">1/1</span>
       <button class="close-btn" onclick="closeImagePreview(event)">&times;</button>
     </div>
   </div>
@@ -252,19 +252,101 @@
     
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     const previewImage = document.getElementById('previewImage');
-    const previewName = document.getElementById('previewName');
+    const previewControls = document.getElementById('previewControls');
+    
+    // Hide controls after 1 second
+    previewControls.classList.remove('hide');
+    setTimeout(() => {
+      previewControls.classList.add('hide');
+    }, 1000);
     
     // Set the preview image
     previewImage.src = img.src;
     
-    // Set the filename
-    const filename = img.getAttribute('data-filename');
-    previewName.textContent = filename || 'Image';
+    // Calculate total images and current position
+    const allImages = Array.from(document.querySelectorAll('.img-thumbnail'));
+    const visibleImages = allImages.filter(img => img.offsetParent !== null);
+    
+    // Find the index of the current image
+    let currentIndex = -1;
+    for (let i = 0; i < visibleImages.length; i++) {
+      if (visibleImages[i].src === img.src) {
+        currentIndex = i;
+        break;
+      }
+    }
+    
+    // Update counter
+    updateImageCounter(currentIndex, visibleImages.length);
     
     // Show the overlay
     previewOverlay.style.display = 'flex';
     document.body.style.overflow = 'hidden'; // Prevent scrolling when preview is open
+    
+    // Remember current state for navigation
+    previewOverlay.dataset.currentIndex = currentIndex;
+    previewOverlay.dataset.totalImages = visibleImages.length;
   }
+  
+  function updateImageCounter(currentIndex, totalImages) {
+    const counter = document.getElementById('imageCounter');
+    counter.textContent = `${currentIndex + 1}/${totalImages}`;
+  }
+  
+  function navigateImage(direction, event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    const previewOverlay = document.getElementById('imagePreviewOverlay');
+    const previewImage = document.getElementById('previewImage');
+    const previewControls = document.getElementById('previewControls');
+    
+    // Show controls and hide after 1 second
+    previewControls.classList.remove('hide');
+    setTimeout(() => {
+      previewControls.classList.add('hide');
+    }, 1000);
+    
+    // Get all image elements
+    const allImages = Array.from(document.querySelectorAll('.img-thumbnail'));
+    const visibleImages = allImages.filter(img => img.offsetParent !== null);
+    
+    // Get current index from dataset
+    let currentIndex = parseInt(previewOverlay.dataset.currentIndex) || 0;
+    const totalImages = parseInt(previewOverlay.dataset.totalImages) || visibleImages.length;
+    
+    // Calculate the new index
+    let newIndex = currentIndex + direction;
+    
+    // Handle wrapping around
+    if (newIndex < 0) {
+      newIndex = visibleImages.length - 1;
+    } else if (newIndex >= visibleImages.length) {
+      newIndex = 0;
+    }
+    
+    // Set the new image and update counter
+    if (visibleImages[newIndex]) {
+      previewImage.src = visibleImages[newIndex].src;
+      updateImageCounter(newIndex, totalImages);
+      
+      // Update current index
+      previewOverlay.dataset.currentIndex = newIndex;
+    }
+  }
+  
+  // Add mouse wheel navigation with reversed direction
+  document.getElementById('imagePreviewOverlay').addEventListener('wheel', function(e) {
+    e.preventDefault(); // Prevent page scrolling
+    if (e.deltaY > 0) {
+      // Scrolling down - go to previous image
+      navigateImage(-1, e);
+    } else {
+      // Scrolling up - go to next image
+      navigateImage(1, e);
+    }
+  });
   
   function closeImagePreview(event) {
     if (event) {
@@ -274,67 +356,6 @@
     const previewOverlay = document.getElementById('imagePreviewOverlay');
     previewOverlay.style.display = 'none';
     document.body.style.overflow = ''; // Restore scrolling
-  }
-  
-  function navigateImage(direction, event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    
-    const previewImage = document.getElementById('previewImage');
-    const previewName = document.getElementById('previewName');
-    const currentSrc = previewImage.src;
-    
-    // Get all image elements
-    const allImages = Array.from(document.querySelectorAll('.img-thumbnail'));
-    const visibleImages = allImages.filter(img => img.offsetParent !== null);
-    
-    // Find the index of the current image
-    let currentIndex = -1;
-    for (let i = 0; i < visibleImages.length; i++) {
-      if (visibleImages[i].src === currentSrc) {
-        currentIndex = i;
-        break;
-      }
-    }
-    
-    if (currentIndex !== -1) {
-      // Calculate the new index
-      let newIndex = currentIndex + direction;
-      
-      // Handle wrapping around
-      if (newIndex < 0) {
-        newIndex = visibleImages.length - 1;
-      } else if (newIndex >= visibleImages.length) {
-        newIndex = 0;
-      }
-      
-      // Set the new image and name
-      if (visibleImages[newIndex]) {
-        previewImage.src = visibleImages[newIndex].src;
-        // Update the filename
-        const filename = visibleImages[newIndex].getAttribute('data-filename');
-        previewName.textContent = filename || 'Image';
-      }
-    }
-  }
-  
-  function updateImageCounter() {
-    const counter = document.getElementById('imageCounter');
-    counter.innerText = `${currentImageIndex + 1}/${galleryImages.length}`;
-  }
-  
-  function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevImageBtn');
-    const nextBtn = document.getElementById('nextImageBtn');
-    
-    if (galleryImages.length <= 1) {
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-    } else {
-      prevBtn.style.display = 'flex';
-      nextBtn.style.display = 'flex';
-    }
   }
   
   // Add touch swipe support for mobile
@@ -369,18 +390,6 @@
       navigateImage(-1, e);
     }
   }
-  
-  // Add mouse wheel navigation
-  document.getElementById('imagePreviewOverlay').addEventListener('wheel', function(e) {
-    e.preventDefault(); // Prevent page scrolling
-    if (e.deltaY < 0) {
-      // Scrolling up - go to previous image
-      navigateImage(-1, e);
-    } else {
-      // Scrolling down - go to next image
-      navigateImage(1, e);
-    }
-  });
   
   // Add keyboard navigation
   document.addEventListener('keydown', function(e) {
@@ -531,5 +540,27 @@
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus(); // Initial check
+  });
+  
+  // Enable right-click and context menu on preview image
+  document.getElementById('previewImage').addEventListener('contextmenu', function(e) {
+    // Allow default context menu to enable "Copy Image"
+    // This ensures the browser's native image copy functionality works
+    e.stopPropagation();
+    return true;
+  });
+  
+  // Show controls when mouse moves
+  document.getElementById('imagePreviewOverlay').addEventListener('mousemove', function() {
+    const previewControls = document.getElementById('previewControls');
+    previewControls.classList.remove('hide');
+    
+    // Clear any existing timeout
+    if (this.timeout) clearTimeout(this.timeout);
+    
+    // Set a new timeout
+    this.timeout = setTimeout(() => {
+      previewControls.classList.add('hide');
+    }, 1000);
   });
 </script> 

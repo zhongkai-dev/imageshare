@@ -180,30 +180,29 @@ router.post('/upload-images', isAuthenticated, (req, res) => {
   });
 });
 
-// View image file (for previews)
+// View a file
 router.get('/view/:id', isAuthenticated, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
-    
-    // Check if file exists and belongs to the user
-    if (!file || file.userId !== req.session.userId) {
+    if (!file) {
       return res.status(404).send('File not found');
     }
     
-    // Check if file exists on disk
-    if (!fs.existsSync(file.path)) {
-      await File.findByIdAndDelete(req.params.id);
-      return res.status(404).send('File not found');
+    // Check if user has access to this file
+    if (file.userId !== req.session.userId) {
+      return res.status(403).send('Unauthorized');
     }
     
-    // Only allow viewing of image files
-    if (!file.mimetype.startsWith('image/')) {
-      return res.status(400).send('Not an image file');
-    }
+    const filePath = path.join(process.cwd(), 'uploads', file._id.toString());
+    res.setHeader('Content-Type', file.mimetype);
+    res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`);
     
-    res.sendFile(file.path);
+    // Add cache control headers for better performance
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    
+    fs.createReadStream(filePath).pipe(res);
   } catch (err) {
-    console.error(err);
+    console.error('Error viewing file:', err);
     res.status(500).send('Server error');
   }
 });
