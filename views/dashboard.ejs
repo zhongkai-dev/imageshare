@@ -1,19 +1,42 @@
+<!-- Custom CSS overrides -->
+<style>
+  .navbar-brand {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+  .navbar-logo {
+    margin-right: 0 !important;
+  }
+  .dev-label {
+    margin-left: 6px !important;
+    padding-left: 0 !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    color: #4e73df !important;
+    font-weight: 500 !important;
+  }
+  .navbar-left {
+    gap: 0 !important;
+  }
+</style>
+
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
   <div class="container">
-    <div class="d-flex align-items-center">
-      <a class="navbar-brand" href="#">
-        <img src="/icons/logo.png" alt="My Fen" class="navbar-logo">
-        My Fen
+    <div class="d-flex align-items-center navbar-left" style="gap: 0;">
+      <a class="navbar-brand p-0 m-0" style="margin-right: 0 !important;" href="#">
+        <img src="/icons/logo.png" alt="My Fen" class="navbar-logo" style="margin-right: 0;">
       </a>
-      <span class="dev-label">Dev ZK</span>
+      <a href="https://t.me/ZhongKai_KL" class="dev-label m-0 p-0" style="text-decoration: none; margin-left: 5px; color: #4e73df;">Dev-中凯</a>
     </div>
     <div class="ms-auto">
-      <span class="badge bg-primary me-2">User ID: <%= userId %></span>
-      <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;">
-        <i class="fas fa-download me-1"></i> Install App
+      <span class="badge bg-primary me-2" style="font-size: 14px; padding: 6px 10px;">User ID: <%= userId %></span>
+      <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;" title="Install App">
+        <i class="fas fa-download"></i>
       </button>
-      <a href="/auth/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+      <a href="/auth/logout" class="btn btn-outline-danger btn-sm" title="Logout">
+        <i class="fas fa-sign-out-alt"></i>
+      </a>
     </div>
   </div>
 </nav>
