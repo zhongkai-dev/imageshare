@@ -79,5 +79,16 @@ function startServer() {
 
   // Start server
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  
+  const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  
+  // Handle port in use error
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+      console.log(`Port ${PORT} is already in use, trying alternative port ${PORT + 1}`);
+      app.listen(PORT + 1, () => console.log(`Server running on port ${PORT + 1}`));
+    } else {
+      console.error('Server error:', e);
+    }
+  });
 }

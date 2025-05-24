@@ -23,8 +23,7 @@ const FileSchema = new mongoose.Schema({
   },
   userId: {
     type: String,
-    required: true,
-    ref: 'User'
+    required: true
   },
   groupId: {
     type: String,
@@ -32,11 +31,16 @@ const FileSchema = new mongoose.Schema({
   },
   fileType: {
     type: String,
-    default: 'image'
+    enum: ['image', 'document', 'video', 'audio', 'other'],
+    default: 'other'
   },
   uploadDate: {
     type: Date,
     default: Date.now
+  },
+  extractedPhoneNumbers: {
+    type: [String],
+    default: []
   }
 });
 

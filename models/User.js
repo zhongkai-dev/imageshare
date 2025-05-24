@@ -26,7 +26,4 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Clear any existing indexes and create a new one for userId
-UserSchema.index({ userId: 1 }, { unique: true });
-
 module.exports = mongoose.model('User', UserSchema, 'fileusers'); // Use 'fileusers' collection instead of 'users' 

@@ -18,6 +18,166 @@
   .navbar-left {
     gap: 0 !important;
   }
+  
+  .image-grid-item {
+    position: relative;
+  }
+  
+  .image-preview {
+    position: relative;
+  }
+  
+  /* Add styling for file info area */
+  .file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .file-info > div:first-child {
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Button spacing */
+  .file-info .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Styles for extracted phone numbers list */
+  .extracted-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .phone-number-item {
+    display: flex;
+    align-items: center;
+    background-color: #f0f8ff;
+    border: 1px solid #cce5ff;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.9rem;
+  }
+  
+  .phone-number-item .copy-number-btn {
+    border: none;
+    background: transparent;
+    color: #4e73df;
+    padding: 2px 5px;
+    margin-left: 6px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  .phone-number-item .copy-number-btn:hover {
+    background-color: rgba(78, 115, 223, 0.1);
+  }
+  
+  .phone-number-loading {
+    display: flex;
+    align-items: center;
+  }
+  
+  .image-paste-preview {
+    background-color: rgba(0,0,0,0.03);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+  
+  .preview-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .preview-item .remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  /* Message input styles for textarea */
+  .message-input-container {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+  }
+  
+  .message-input {
+    border-radius: 20px;
+    padding: 10px 40px 10px 15px;
+    resize: none;
+    overflow-y: auto;
+    max-height: 120px;
+    min-height: 42px;
+    line-height: 1.5;
+  }
+  
+  .input-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Custom text selection color for message input */
+  .message-input::selection {
+    background-color: rgba(78, 115, 223, 0.3); /* Light blue color */
+    color: inherit;
+  }
+  
+  /* For Firefox */
+  .message-input::-moz-selection {
+    background-color: rgba(78, 115, 223, 0.3); /* Light blue color */
+    color: inherit;
+  }
+  
+  /* Keyboard shortcuts hint styling */
+  .keyboard-shortcuts-hint {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    padding-left: 12px;
+  }
+  
+  .keyboard-shortcuts-hint strong {
+    background-color: rgba(78, 115, 223, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
 </style>
 
 <!-- Navbar -->
@@ -31,10 +191,10 @@
     </div>
     <div class="ms-auto">
       <span class="badge bg-primary me-2" style="font-size: 14px; padding: 6px 10px;">User ID: <%= userId %></span>
-      <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;" title="Install App">
+      <button id="installButton" class="btn btn-outline-primary btn-sm me-2" style="display: none;">
         <i class="fas fa-download"></i>
       </button>
-      <a href="/auth/logout" class="btn btn-outline-danger btn-sm" title="Logout">
+      <a href="/auth/logout" class="btn btn-outline-danger btn-sm">
         <i class="fas fa-sign-out-alt"></i>
       </a>
     </div>
@@ -67,7 +227,7 @@
               <div class="message-actions-header">
                 <!-- Delete bubble button -->
                 <form action="/files/delete-group/<%= group.groupId %>" method="POST" class="d-inline delete-message-form">
-                  <button type="submit" class="btn-delete-message" title="Delete message" onclick="return confirm('Delete this entire message?')">
+                  <button type="submit" class="btn-delete-message" onclick="return confirm('Delete this entire message?')">
                     <i class="fas fa-trash-alt"></i>
                   </button>
                 </form>
@@ -80,7 +240,7 @@
                   <div class="text-message">
                     <div class="message-text-content"><%= message.text %></div>
                     <div class="message-text-actions">
-                      <button class="btn-copy-message" onclick="copyMessageText(this)" title="Copy message">
+                      <button class="btn-copy-message" onclick="copyMessageText(this)">
                         <i class="fas fa-copy"></i>
                       </button>
                     </div>
@@ -91,17 +251,41 @@
               <!-- If group contains multiple images, show them in a grid -->
               <% if (group.files.length > 1 && group.files.every(file => file.mimetype.startsWith('image/'))) { %>
                 <div class="image-grid <%= group.files.length > 4 ? 'grid-many' : group.files.length > 2 ? 'grid-' + group.files.length : '' %>">
-                  <% group.files.forEach(file => { %>
+                  <% group.files.forEach((file, index) => { %>
                     <div class="image-grid-item">
                       <img src="/files/view/<%= file._id %>" alt="<%= file.originalName %>" 
                           class="img-thumbnail chat-img" 
                           data-filename="<%= file.originalName %>"
+                          data-fileid="<%= file._id %>"
                           onclick="openImagePreview(event, this)">
                     </div>
                   <% }); %>
                 </div>
                 <div class="file-info mt-2">
-                  <span><%= group.files.length %> images</span>
+                  <div><span><%= group.files.length %> images</span></div>
+                  <div class="mt-2 d-flex">
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="downloadAllFiles('<%= JSON.stringify(group.files.map(f => f._id)) %>')">
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <% if (!group.files[0].extractedPhoneNumbers || !group.files[0].extractedPhoneNumbers.length) { %>
+                    <button class="btn btn-sm btn-outline-secondary extract-btn" 
+                            onclick="extractPhoneNumbersInline('<%= group.files[0]._id %>', event, this)">
+                      <i class="fas fa-phone"></i>
+                    </button>
+                    <% } %>
+                    <div class="extracted-numbers ms-3 <%= group.files[0].extractedPhoneNumbers && group.files[0].extractedPhoneNumbers.length ? '' : 'd-none' %>" data-fileid="<%= group.files[0]._id %>">
+                      <% if (group.files[0].extractedPhoneNumbers && group.files[0].extractedPhoneNumbers.length) { %>
+                        <% group.files[0].extractedPhoneNumbers.forEach(number => { %>
+                          <div class="phone-number-item">
+                            <span><%= number %></span>
+                            <button class="copy-number-btn" onclick="copyInlineNumber('<%= number %>', this)">
+                              <i class="fas fa-copy"></i>
+                            </button>
+                          </div>
+                        <% }); %>
+                      <% } %>
+                    </div>
+                  </div>
                 </div>
               <!-- If single image, show normally -->
               <% } else if (group.files.length === 1 && group.files[0].mimetype.startsWith('image/')) { %>
@@ -109,23 +293,43 @@
                   <img src="/files/view/<%= group.files[0]._id %>" alt="<%= group.files[0].originalName %>" 
                       class="img-thumbnail chat-img" 
                       data-filename="<%= group.files[0].originalName %>"
+                      data-fileid="<%= group.files[0]._id %>"
                       onclick="openImagePreview(event, this)">
-                  <div class="file-info">
-                    <span><%= group.files[0].originalName %></span>
-                    <small><%= (group.files[0].size / 1024).toFixed(2) %> KB</small>
+                  <div class="file-info mt-2">
+                    <div>
+                      <span><%= group.files[0].originalName %></span>
+                      <small><%= (group.files[0].size / 1024).toFixed(2) %> KB</small>
+                    </div>
+                    <div class="mt-2 d-flex">
+                      <a href="/files/download/<%= group.files[0]._id %>" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-download"></i>
+                      </a>
+                      <% if (!group.files[0].extractedPhoneNumbers || !group.files[0].extractedPhoneNumbers.length) { %>
+                      <button class="btn btn-sm btn-outline-secondary extract-btn" 
+                              onclick="extractPhoneNumbersInline('<%= group.files[0]._id %>', event, this)">
+                        <i class="fas fa-phone"></i>
+                      </button>
+                      <% } %>
+                      <div class="extracted-numbers ms-3 <%= group.files[0].extractedPhoneNumbers && group.files[0].extractedPhoneNumbers.length ? '' : 'd-none' %>" data-fileid="<%= group.files[0]._id %>">
+                        <% if (group.files[0].extractedPhoneNumbers && group.files[0].extractedPhoneNumbers.length) { %>
+                          <% group.files[0].extractedPhoneNumbers.forEach(number => { %>
+                            <div class="phone-number-item">
+                              <span><%= number %></span>
+                              <button class="copy-number-btn" onclick="copyInlineNumber('<%= number %>', this)">
+                                <i class="fas fa-copy"></i>
+                              </button>
+                            </div>
+                          <% }); %>
+                        <% } %>
+                      </div>
+                    </div>
                   </div>
                 </div>
               <% } %>
               
               <!-- Group-level actions for image groups -->
               <% if (group.files.length > 1 && group.files.every(file => file.mimetype.startsWith('image/'))) { %>
-                <div class="message-actions mt-2">
-                  <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="downloadAllFiles('<%= JSON.stringify(group.files.map(f => f._id)) %>')">
-                      <i class="fas fa-download"></i> Download All
-                    </button>
-                  </div>
-                </div>
+                <!-- Removed duplicate buttons here -->
               <% } %>
             </div>
           </div>
@@ -145,21 +349,35 @@
   
   <!-- Chat input form -->
   <div class="chat-input-form">
-    <form action="/files/upload-images" method="post" enctype="multipart/form-data" id="chatForm">
+    <form action="/files/upload-images" method="post" enctype="multipart/form-data" id="chatForm" onsubmit="return handleFormSubmit(this, event);">
       <div class="input-wrapper">
         <div class="message-input-container">
-          <input type="text" class="form-control message-input" name="message" placeholder="Type a message..." autocomplete="off">
+          <textarea class="form-control message-input" name="message" placeholder="Type a message..." autocomplete="off" rows="1"></textarea>
           <div class="input-actions">
-            <label for="imageInput" class="btn-attach" title="Attach images">
+            <label for="imageInput" class="btn-attach">
               <i class="fas fa-image"></i>
             </label>
-            <input type="file" id="imageInput" name="images" multiple accept="image/*" style="display: none;" onchange="updateFileLabel()">
+            <input type="file" id="imageInput" name="images" multiple accept="image/*" style="display: none;" onchange="handleSelectedFiles(event)">
             <span id="fileCount" class="file-count"></span>
           </div>
         </div>
         <button type="submit" class="btn btn-primary send-button">
           <i class="fas fa-paper-plane"></i>
         </button>
+      </div>
+      
+      <div class="keyboard-shortcuts-hint text-muted small mt-1">
+        <span class="me-3"><i class="fas fa-keyboard me-1"></i> Press <strong>Enter</strong> to send</span>
+        <span><i class="fas fa-level-down-alt fa-rotate-90 me-1"></i> Press <strong>Shift+Enter</strong> for line break</span>
+      </div>
+      
+      <!-- Pasted images preview container -->
+      <div id="imagePreviewContainer" class="image-paste-preview mt-2" style="display: none;">
+        <div class="preview-header d-flex justify-content-between align-items-center mb-2">
+          <span class="preview-title"><i class="fas fa-images me-2"></i><span id="previewCount">0</span> images</span>
+          <button type="button" class="btn-close" onclick="clearPastedImages()"></button>
+        </div>
+        <div id="previewGrid" class="preview-grid"></div>
       </div>
     </form>
   </div>
@@ -171,7 +389,7 @@
     <img id="previewImage" src="" alt="Preview">
     <div class="preview-controls" id="previewControls">
       <button class="nav-btn prev-btn" onclick="navigateImage(-1, event)">❮</button>
-      <button class="nav-btn copy-btn" onclick="copyCurrentImage(event)" title="Copy image">
+      <button class="nav-btn copy-btn" onclick="copyCurrentImage(event)">
         <i class="fas fa-copy"></i>
       </button>
       <button class="nav-btn next-btn" onclick="navigateImage(1, event)">❯</button>
@@ -181,49 +399,58 @@
 </div>
 
 <script>
-  // Scroll to bottom of chat on load
+  // Call this on window load
   window.onload = function() {
+    // Setup textarea auto-resize first so it's ready when we focus
+    setupTextareaAutoResize();
+    
     scrollToBottom();
     
-    // Add submit handlers to show loading indicators
-    document.getElementById('chatForm').addEventListener('submit', function() {
-      const btn = this.querySelector('button[type="submit"]');
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-      btn.disabled = true;
-    });
+    // Focus on the message input box
+    const messageInput = document.querySelector('.message-input');
+    if (messageInput) {
+      // Set a small delay to ensure everything is loaded
+      setTimeout(() => {
+        messageInput.focus();
+      }, 300);
+    }
     
     // Handle virtual keyboard on mobile devices
-    const messageInput = document.querySelector('.message-input');
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // When the input is focused (keyboard appears)
-      messageInput.addEventListener('focus', function() {
-        document.body.classList.add('keyboard-open');
-        // Small delay to ensure the keyboard is fully open
-        setTimeout(function() {
-          ensureInputVisible();
-          scrollToBottom();
-        }, 300);
-      });
+    if (messageInput) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      // Also ensure visibility when typing
-      messageInput.addEventListener('input', ensureInputVisible);
-      
-      // When the input loses focus (keyboard disappears)
-      messageInput.addEventListener('blur', function() {
-        document.body.classList.remove('keyboard-open');
-      });
-      
-      // Detect iOS keyboard
-      window.addEventListener('resize', function() {
-        if (document.activeElement === messageInput) {
-          // Keyboard is likely open
+      if (isMobile) {
+        // When the input is focused (keyboard appears)
+        messageInput.addEventListener('focus', function() {
           document.body.classList.add('keyboard-open');
-          setTimeout(scrollToBottom, 300);
-        }
-      });
+          // Small delay to ensure the keyboard is fully open
+          setTimeout(function() {
+            ensureInputVisible();
+            scrollToBottom();
+          }, 300);
+        });
+        
+        // Also ensure visibility when typing
+        messageInput.addEventListener('input', ensureInputVisible);
+        
+        // When the input loses focus (keyboard disappears)
+        messageInput.addEventListener('blur', function() {
+          document.body.classList.remove('keyboard-open');
+        });
+        
+        // Detect iOS keyboard
+        window.addEventListener('resize', function() {
+          if (document.activeElement === messageInput) {
+            // Keyboard is likely open
+            document.body.classList.add('keyboard-open');
+            setTimeout(scrollToBottom, 300);
+          }
+        });
+      }
     }
+    
+    // Setup paste event listeners for image pasting
+    setupImagePasteSupport();
   };
   
   // Function to scroll to bottom of chat
@@ -499,12 +726,41 @@
   function downloadAllFiles(fileIds) {
     try {
       const ids = JSON.parse(fileIds);
-      ids.forEach((id, index) => {
-        // Slight delay between downloads to avoid browser blocking
-        setTimeout(() => {
-          window.open('/files/download/' + id, '_blank');
-        }, index * 300);
-      });
+      
+      // Create an invisible iframe to handle downloads
+      const downloadFrame = document.createElement('iframe');
+      downloadFrame.style.display = 'none';
+      document.body.appendChild(downloadFrame);
+      
+      // Function to download sequentially
+      function downloadNext(index) {
+        if (index >= ids.length) {
+          // All downloads initiated, clean up
+          setTimeout(() => {
+            document.body.removeChild(downloadFrame);
+          }, 5000); // Allow time for downloads to start
+          return;
+        }
+        
+        // Set the iframe src to the download URL
+        const downloadUrl = '/files/download/' + ids[index];
+        
+        // For the first download, navigate directly
+        if (index === 0) {
+          downloadFrame.src = downloadUrl;
+        } else {
+          // For subsequent downloads, use a small delay
+          setTimeout(() => {
+            downloadFrame.src = downloadUrl;
+          }, 500 * index); // Space out downloads by 500ms each
+        }
+        
+        // Process next download
+        downloadNext(index + 1);
+      }
+      
+      // Start downloading
+      downloadNext(0);
     } catch (e) {
       console.error('Error downloading files:', e);
     }
@@ -723,5 +979,564 @@
         copyBtn.innerHTML = originalHTML;
       }
     }
+  }
+
+  // Function to format phone number for display
+  function formatPhoneNumber(phoneNumber) {
+    // Return raw E.164 format: 1XXXXXXXXXX without any formatting
+    // Ensure it has the country code
+    if (phoneNumber.length === 10) {
+      return `1${phoneNumber}`;
+    } else if (phoneNumber.length === 11 && phoneNumber.startsWith('1')) {
+      return phoneNumber;
+    }
+    
+    // Fallback to raw format if we can't parse it
+    return phoneNumber;
+  }
+
+  // Function to extract phone numbers and display them inline
+  function extractPhoneNumbersInline(fileId, event, buttonElement) {
+    if (event) {
+      event.stopPropagation(); // Prevent image preview from opening
+    }
+    
+    // Find the extracted numbers container
+    const extractedContainer = buttonElement.parentElement.querySelector('.extracted-numbers');
+    
+    // If numbers are already showing, do nothing
+    if (!extractedContainer.classList.contains('d-none')) {
+      return;
+    }
+    
+    // Show loading state
+    extractedContainer.classList.remove('d-none');
+    extractedContainer.innerHTML = `
+      <div class="phone-number-loading">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <span>Extracting...</span>
+      </div>
+    `;
+    
+    // Show loading state in the button
+    const originalHTML = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    buttonElement.disabled = true;
+    
+    // Get the image URL
+    const imgElement = document.querySelector(`img[data-fileid="${fileId}"]`);
+    if (!imgElement) {
+      extractedContainer.innerHTML = `<div class="text-danger">Error: Image not found!</div>`;
+      buttonElement.innerHTML = originalHTML;
+      buttonElement.disabled = false;
+      return;
+    }
+    
+    const imageUrl = imgElement.src;
+    
+    // Use Tesseract.js to perform OCR
+    Tesseract.recognize(
+      imageUrl,
+      'eng',
+      { 
+        logger: m => console.log(m),
+        tessedit_char_whitelist: '0123456789()-+. '
+      }
+    )
+    .then(({ data: { text } }) => {
+      // Extract phone numbers with our patterns
+      const phoneNumbers = extractPhoneNumbersFromText(text);
+      
+      // Save the extracted numbers to the server
+      saveExtractedPhoneNumbers(fileId, phoneNumbers)
+        .then(() => {
+          // Show results inline
+          displayPhoneNumbersInline(phoneNumbers, extractedContainer);
+          
+          // Reset button
+          buttonElement.innerHTML = originalHTML;
+          buttonElement.disabled = false;
+        })
+        .catch(error => {
+          console.error('Error saving phone numbers:', error);
+          // Still show the numbers even if save fails
+          displayPhoneNumbersInline(phoneNumbers, extractedContainer);
+          buttonElement.innerHTML = originalHTML;
+          buttonElement.disabled = false;
+        });
+    })
+    .catch(error => {
+      console.error('OCR error:', error);
+      extractedContainer.innerHTML = `<div class="text-danger">Error: ${error.message}</div>`;
+      buttonElement.innerHTML = originalHTML;
+      buttonElement.disabled = false;
+    });
+  }
+  
+  // Function to save extracted phone numbers to the server
+  async function saveExtractedPhoneNumbers(fileId, phoneNumbers) {
+    try {
+      const response = await fetch(`/files/save-phone-numbers/${fileId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phoneNumbers })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save phone numbers');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error saving phone numbers:', error);
+      throw error;
+    }
+  }
+  
+  // Function to extract phone numbers from text
+  function extractPhoneNumbersFromText(text) {
+    console.log("Extracted text:", text);  // Debug log
+    
+    // Multiple patterns to catch different formats
+    const patterns = [
+      // Format with parentheses: (555) 123-4567
+      /(?:\+?1[ -]?)?(?:\(([2-9][0-9]{2})\)[ -]?)([2-9][0-9]{2})[ -]?([0-9]{4})/g,
+      
+      // Format with dashes/spaces: 555-123-4567
+      /(?:\+?1[ -]?)?(?:([2-9][0-9]{2})[ -])([2-9][0-9]{2})[ -]([0-9]{4})/g,
+      
+      // Format with dots: 555.123.4567
+      /(?:\+?1[ \.]?)?(?:([2-9][0-9]{2})[ \.])([2-9][0-9]{2})[ \.]([0-9]{4})/g,
+      
+      // Straight format with no separators: 5551234567
+      /(?:\+?1)?([2-9][0-9]{2})([2-9][0-9]{2})([0-9]{4})/g,
+      
+      // Format for 11-digit with country code: 15551234567
+      /(?:^|\D)(1)([2-9][0-9]{2})([0-9]{3})([0-9]{4})(?:$|\D)/g
+    ];
+    
+    const numbers = [];
+    
+    // Try each pattern
+    patterns.forEach(pattern => {
+      let match;
+      const textCopy = text.toString();  // Create a copy for each pattern
+      while ((match = pattern.exec(textCopy)) !== null) {
+        let areaCode, prefix, lineNumber, countryCode;
+        
+        if (match.length === 5) {
+          // Format for 11-digit with country code
+          countryCode = match[1];
+          areaCode = match[2];
+          prefix = match[3];
+          lineNumber = match[4];
+        } else {
+          // Other formats
+          areaCode = match[1] || '';
+          prefix = match[2] || '';
+          lineNumber = match[3] || '';
+        }
+        
+        if (areaCode && prefix && lineNumber) {
+          const formattedNumber = `1${areaCode}${prefix}${lineNumber}`;
+          if (formattedNumber.length === 11) {
+            numbers.push(formattedNumber);
+          }
+        }
+      }
+    });
+    
+    // Special case for raw 10-digit or 11-digit numbers
+    const rawNumberPattern = /\b(1)?([2-9][0-9]{2})([0-9]{3})([0-9]{4})\b/g;
+    let rawMatch;
+    const textCopy = text.toString();
+    while ((rawMatch = rawNumberPattern.exec(textCopy)) !== null) {
+      const countryCode = rawMatch[1] || '1';
+      const areaCode = rawMatch[2];
+      const prefix = rawMatch[3];
+      const lineNumber = rawMatch[4];
+      
+      numbers.push(`${countryCode}${areaCode}${prefix}${lineNumber}`);
+    }
+    
+    // Ensure all numbers are in E.164 format (just digits, no spaces or special chars)
+    const formattedNumbers = numbers.map(number => {
+      // Remove any non-digit characters
+      const digitsOnly = number.replace(/\D/g, '');
+      
+      // Ensure it has country code
+      if (digitsOnly.length === 10) {
+        return `1${digitsOnly}`;
+      } else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+        return digitsOnly;
+      }
+      
+      return number; // Return original if we can't format it
+    });
+    
+    // Return unique numbers in E.164 format
+    return [...new Set(formattedNumbers)];
+  }
+  
+  // Display phone numbers inline in the container
+  function displayPhoneNumbersInline(numbers, container) {
+    container.innerHTML = '';
+    
+    if (numbers && numbers.length > 0) {
+      // Create a container for each number
+      numbers.forEach(number => {
+        const phoneItem = document.createElement('div');
+        phoneItem.className = 'phone-number-item';
+        
+        const formattedNumber = formatPhoneNumber(number);
+        phoneItem.innerHTML = `
+          <span>${formattedNumber}</span>
+          <button class="copy-number-btn" onclick="copyInlineNumber('${number}', this)">
+            <i class="fas fa-copy"></i>
+          </button>
+        `;
+        
+        container.appendChild(phoneItem);
+      });
+    } else {
+      container.innerHTML = `<div class="text-muted">No phone numbers found</div>`;
+    }
+  }
+  
+  // Function to copy an inline phone number
+  function copyInlineNumber(number, button) {
+    navigator.clipboard.writeText(number).then(() => {
+      // Success feedback
+      const originalHTML = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-check"></i>';
+      
+      // Reset after 1.5 seconds
+      setTimeout(() => {
+        button.innerHTML = originalHTML;
+      }, 1500);
+    });
+  }
+
+  // Image paste related functions
+  let pastedImages = [];
+  const MAX_PASTED_IMAGES = 9;
+
+  function setupImagePasteSupport() {
+    // Listen for paste events on the document
+    document.addEventListener('paste', handlePaste);
+  }
+
+  function handlePaste(e) {
+    // Check if we have clipboard data
+    if (!e.clipboardData || !e.clipboardData.items) {
+      return;
+    }
+    
+    const items = e.clipboardData.items;
+    let hasImages = false;
+    
+    // First check if there are any images
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        hasImages = true;
+        break;
+      }
+    }
+    
+    // If no images found, allow default paste behavior for text
+    if (!hasImages) {
+      return;
+    }
+    
+    // We found images, handle the paste ourselves
+    e.preventDefault();
+    
+    // Collect all image files from this paste
+    let newImages = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          newImages.push(blob);
+        }
+      }
+    }
+    
+    // If we found new images, add them to our collection
+    if (newImages.length > 0) {
+      console.log(`Adding ${newImages.length} new pasted images`);
+      
+      // Check if adding these would exceed the limit
+      if (pastedImages.length + newImages.length > MAX_PASTED_IMAGES) {
+        // Only add up to the limit
+        const remaining = MAX_PASTED_IMAGES - pastedImages.length;
+        if (remaining <= 0) {
+          alert(`Maximum of ${MAX_PASTED_IMAGES} images reached. Cannot add more images.`);
+          return;
+        }
+        
+        alert(`Only adding ${remaining} more images to stay within the ${MAX_PASTED_IMAGES} image limit.`);
+        newImages = newImages.slice(0, remaining);
+      }
+      
+      // Add new images to existing collection
+      pastedImages = pastedImages.concat(newImages);
+      
+      // Display updated preview
+      displayImagePreviews(pastedImages);
+      
+      // Setup form to handle these images on submit
+      setupPasteSubmitHandler();
+    }
+  }
+  
+  function displayImagePreviews(images) {
+    // Get UI elements
+    const container = document.getElementById('imagePreviewContainer');
+    const previewGrid = document.getElementById('previewGrid');
+    const previewCount = document.getElementById('previewCount');
+    
+    // Clear grid
+    previewGrid.innerHTML = '';
+    
+    // Update count
+    previewCount.textContent = images.length;
+    
+    // Show container
+    container.style.display = 'block';
+    
+    // Update file count indicator
+    const fileCount = document.getElementById('fileCount');
+    fileCount.textContent = images.length + (images.length === 1 ? ' image' : ' images');
+    fileCount.style.display = 'inline-block';
+    
+    // Make sure the close button clears all images
+    const closeBtn = container.querySelector('.btn-close');
+    if (closeBtn) {
+      closeBtn.onclick = clearPastedImages;
+    }
+    
+    // Create a preview for each image
+    images.forEach((blob, index) => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'preview-item';
+        previewItem.innerHTML = `
+          <img src="${event.target.result}" alt="Pasted image ${index + 1}">
+          <button type="button" class="remove-btn" data-index="${index}">×</button>
+        `;
+        previewGrid.appendChild(previewItem);
+        
+        // Add event listener to remove button
+        const removeBtn = previewItem.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', function() {
+          // Remove this specific image
+          removeImageAtIndex(index);
+        });
+      };
+      reader.readAsDataURL(blob);
+    });
+    
+    // Ensure the message area scrolls down to show the preview
+    setTimeout(scrollToBottom, 100);
+  }
+  
+  function removeImageAtIndex(index) {
+    // Remove the image at the specified index
+    if (index >= 0 && index < pastedImages.length) {
+      // Remove the image from the array
+      pastedImages.splice(index, 1);
+      
+      if (pastedImages.length === 0) {
+        // If no images left, clear everything
+        clearPastedImages();
+      } else {
+        // Otherwise, update the preview
+        displayImagePreviews(pastedImages);
+      }
+    }
+  }
+  
+  function setupPasteSubmitHandler() {
+    // We no longer need this function as the form submit handler in window.onload now handles pasted images
+    // This is kept as an empty function in case it's called elsewhere
+    console.log("Using main form handler for pasted images");
+  }
+
+  function clearPastedImages() {
+    // Clear global array
+    pastedImages = [];
+    
+    // Reset file input
+    const input = document.getElementById('imageInput');
+    input.value = '';
+    
+    // Hide preview
+    const container = document.getElementById('imagePreviewContainer');
+    container.style.display = 'none';
+    
+    // Reset file count
+    const fileCount = document.getElementById('fileCount');
+    fileCount.style.display = 'none';
+    
+    // Reset form submit handler
+    const form = document.getElementById('chatForm');
+    if (form._originalSubmit) {
+      form.onsubmit = form._originalSubmit;
+    }
+  }
+
+  function updateFileCount() {
+    const input = document.getElementById('imageInput');
+    const fileCount = document.getElementById('fileCount');
+    
+    if (input.files && input.files.length > 0) {
+      fileCount.textContent = input.files.length + (input.files.length === 1 ? ' image' : ' images');
+      fileCount.style.display = 'inline-block';
+    } else {
+      fileCount.style.display = 'none';
+    }
+  }
+
+  function handleSelectedFiles(event) {
+    const files = event.target.files;
+    
+    // Check for file limit
+    if (files.length > MAX_PASTED_IMAGES) {
+      alert(`Maximum of ${MAX_PASTED_IMAGES} images allowed.`);
+      clearPastedImages();
+      return;
+    }
+    
+    // If no files, just clear everything
+    if (files.length === 0) {
+      clearPastedImages();
+      return;
+    }
+    
+    // Clear any pasted images since we're using selected files
+    pastedImages = [];
+    
+    // Create array from FileList
+    const fileArray = Array.from(files);
+    
+    // Display previews
+    displayImagePreviews(fileArray);
+  }
+
+  // Auto-resize the textarea based on content
+  function setupTextareaAutoResize() {
+    const textarea = document.querySelector('.message-input');
+    if (textarea) {
+      // Set initial height
+      textarea.style.height = 'auto';
+      
+      // Function to update height
+      const updateHeight = () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+      };
+      
+      // Add event listeners
+      textarea.addEventListener('input', updateHeight);
+      textarea.addEventListener('focus', updateHeight);
+      
+      // Handle Enter key for sending and Shift+Enter for new line
+      textarea.addEventListener('keydown', function(e) {
+        // Check if Enter key was pressed
+        if (e.key === 'Enter') {
+          // If Shift is not held, send the message
+          if (!e.shiftKey) {
+            e.preventDefault(); // Prevent default (which would add a line break)
+            console.log("Enter pressed - attempting to send message");
+            
+            // Get the form and submit it
+            const form = document.getElementById('chatForm');
+            if (form) {
+              // Click the submit button
+              const submitBtn = form.querySelector('button[type="submit"]');
+              if (submitBtn) {
+                submitBtn.click();
+              } else {
+                form.submit();
+              }
+            }
+          }
+          // If Shift+Enter, do nothing and let the default line break happen
+        }
+      });
+      
+      // Initial height adjustment
+      setTimeout(updateHeight, 100);
+    }
+  }
+
+  // Form submission handler
+  function handleFormSubmit(form, e) {
+    console.log("Form submission function called");
+    
+    // Validate that we have either a message or images
+    const messageInput = form.querySelector('.message-input');
+    const fileInput = document.getElementById('imageInput');
+    
+    if ((!messageInput || !messageInput.value.trim()) && 
+        (!fileInput || fileInput.files.length === 0) && 
+        (!pastedImages || pastedImages.length === 0)) {
+      // No message and no images, prevent submission
+      console.log("No content to send - preventing submission");
+      return false;
+    }
+    
+    // Show loading indicator
+    const btn = form.querySelector('button[type="submit"]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    btn.disabled = true;
+    
+    // If we have pasted images but no files in the input
+    if (pastedImages.length > 0 && (!fileInput.files || fileInput.files.length === 0)) {
+      console.log("Submitting form with pasted images");
+      
+      // Create FormData from the form
+      const formData = new FormData(form);
+      
+      // Add each pasted image
+      pastedImages.forEach((blob, index) => {
+        const fileName = `pasted-image-${Date.now()}-${index}.png`;
+        formData.append('images', new File([blob], fileName, { type: blob.type }));
+      });
+      
+      // Submit with fetch
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (response.redirected) {
+          window.location.href = response.url;
+        } else {
+          return response.text().then(html => {
+            document.open();
+            document.write(html);
+            document.close();
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error submitting form:', error);
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        btn.disabled = false;
+        alert('Error sending message. Please try again.');
+      });
+      
+      return false;
+    }
+    
+    console.log("Proceeding with normal form submission");
+    return true;
   }
 </script> 

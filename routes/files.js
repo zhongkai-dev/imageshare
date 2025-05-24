@@ -372,4 +372,200 @@ router.get('/icons/:icon', (req, res) => {
   res.send(c.toBuffer('image/png'));
 });
 
+// Extract phone numbers from an existing image file
+router.get('/extract-phone/:id', isAuthenticated, async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    
+    // Check if file exists and belongs to the user
+    if (!file || file.userId !== req.session.userId) {
+      return res.status(404).json({ success: false, error: 'File not found' });
+    }
+    
+    // Check if the file exists on disk
+    if (!fs.existsSync(file.path)) {
+      return res.status(404).json({ success: false, error: 'File not found on disk' });
+    }
+    
+    try {
+      // Extract text using OCR
+      const extractedText = await simulateOCR(file.path);
+      
+      // Extract phone numbers from text
+      const phoneNumbers = extractUSPhoneNumbers(extractedText);
+      
+      if (phoneNumbers.length > 0) {
+        // Store in session for popups
+        req.session.extractedNumbers = phoneNumbers;
+        req.session.extractedFilename = file.originalName;
+        
+        // Return the numbers 
+        return res.json({ 
+          success: true, 
+          numbers: phoneNumbers,
+          filename: file.originalName 
+        });
+      } else {
+        return res.json({ 
+          success: false, 
+          error: 'No phone numbers found in the image',
+          filename: file.originalName
+        });
+      }
+    } catch (ocrError) {
+      // Handle OCR-specific errors
+      console.error('OCR error:', ocrError);
+      return res.json({ 
+        success: false, 
+        error: ocrError.message || 'Error during text extraction from image',
+        filename: file.originalName
+      });
+    }
+  } catch (err) {
+    console.error('Error extracting phone numbers:', err);
+    return res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Extract US phone numbers using regex
+function extractUSPhoneNumbers(text) {
+  // Multiple patterns to catch different formats
+  const patterns = [
+    // Format with parentheses: (555) 123-4567
+    /(?:\+?1[ -]?)?(?:\(([2-9][0-9]{2})\)[ -]?)([2-9][0-9]{2})[ -]?([0-9]{4})/g,
+    
+    // Format with dashes/spaces: 555-123-4567
+    /(?:\+?1[ -]?)?(?:([2-9][0-9]{2})[ -])([2-9][0-9]{2})[ -]([0-9]{4})/g,
+    
+    // Format with dots: 555.123.4567
+    /(?:\+?1[ \.]?)?(?:([2-9][0-9]{2})[ \.])([2-9][0-9]{2})[ \.]([0-9]{4})/g,
+    
+    // Straight format with no separators: 5551234567
+    /(?:\+?1)?([2-9][0-9]{2})([2-9][0-9]{2})([0-9]{4})/g,
+    
+    // Format for 11-digit with country code: 15551234567
+    /(?:^|\D)(1)([2-9][0-9]{2})([0-9]{3})([0-9]{4})(?:$|\D)/g
+  ];
+  
+  const numbers = [];
+  
+  // Try each pattern
+  patterns.forEach(pattern => {
+    let match;
+    const textCopy = text.toString();  // Create a copy for each pattern
+    while ((match = pattern.exec(textCopy)) !== null) {
+      let areaCode, prefix, lineNumber, countryCode;
+      
+      if (match.length === 5) {
+        // Format for 11-digit with country code
+        countryCode = match[1];
+        areaCode = match[2];
+        prefix = match[3];
+        lineNumber = match[4];
+      } else {
+        // Other formats
+        areaCode = match[1] || '';
+        prefix = match[2] || '';
+        lineNumber = match[3] || '';
+      }
+      
+      if (areaCode && prefix && lineNumber) {
+        const formattedNumber = `1${areaCode}${prefix}${lineNumber}`;
+        if (formattedNumber.length === 11) {
+          numbers.push(formattedNumber);
+        }
+      }
+    }
+  });
+  
+  // Special case for raw 10-digit or 11-digit numbers
+  const rawNumberPattern = /\b(1)?([2-9][0-9]{2})([0-9]{3})([0-9]{4})\b/g;
+  let rawMatch;
+  const textCopy = text.toString();
+  while ((rawMatch = rawNumberPattern.exec(textCopy)) !== null) {
+    const countryCode = rawMatch[1] || '1';
+    const areaCode = rawMatch[2];
+    const prefix = rawMatch[3];
+    const lineNumber = rawMatch[4];
+    
+    numbers.push(`${countryCode}${areaCode}${prefix}${lineNumber}`);
+  }
+  
+  // Ensure all numbers are in E.164 format (just digits, no spaces or special chars)
+  const formattedNumbers = numbers.map(number => {
+    // Remove any non-digit characters
+    const digitsOnly = number.replace(/\D/g, '');
+    
+    // Ensure it has country code
+    if (digitsOnly.length === 10) {
+      return `1${digitsOnly}`;
+    } else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+      return digitsOnly;
+    }
+    
+    return number; // Return original if we can't format it
+  });
+  
+  // Return unique numbers in E.164 format
+  return [...new Set(formattedNumbers)];
+}
+
+// Helper function to try to extract text from an image
+async function simulateOCR(imagePath) {
+  try {
+    // Unfortunately, without tesseract.js, we cannot perform real OCR
+    // Canvas library is for image manipulation but not OCR
+    throw new Error("Cannot perform OCR on the server. Please use the client-side extraction.");
+  } catch (error) {
+    console.error("OCR error:", error);
+    throw error; // Propagate the error to show it to the user
+  }
+}
+
+// Client-side phone extraction endpoint - responds with empty array since extraction happens in browser
+router.get('/extract-phones/:fileId', async (req, res) => {
+  try {
+    const fileId = req.params.fileId;
+    const file = await File.findById(fileId);
+    
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Return empty array since the actual extraction happens client-side with Tesseract.js
+    res.json({ numbers: [] });
+  } catch (err) {
+    console.error('Error in phone extraction:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Save extracted phone numbers for a file
+router.post('/save-phone-numbers/:fileId', isAuthenticated, async (req, res) => {
+  try {
+    const fileId = req.params.fileId;
+    const { phoneNumbers } = req.body;
+    
+    if (!phoneNumbers || !Array.isArray(phoneNumbers)) {
+      return res.status(400).json({ success: false, error: 'Invalid phone numbers data' });
+    }
+    
+    const file = await File.findById(fileId);
+    
+    // Check if file exists and belongs to the user
+    if (!file || file.userId !== req.session.userId) {
+      return res.status(404).json({ success: false, error: 'File not found' });
+    }
+    
+    // Update the file with extracted phone numbers
+    file.extractedPhoneNumbers = phoneNumbers;
+    await file.save();
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving phone numbers:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 module.exports = router; 
