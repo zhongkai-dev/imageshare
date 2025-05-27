@@ -31,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB with improved options
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://messaging:messaging@zkmessenger.jbjckib.mongodb.net/?retryWrites=true&w=majority&appName=ZKMessenger', {
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -51,7 +51,7 @@ function startServer() {
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
-      mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://messaging:messaging@zkmessenger.jbjckib.mongodb.net/?retryWrites=true&w=majority&appName=ZKMessenger',
+      mongoUrl: process.env.MONGODB_URI,
       ttl: 14 * 24 * 60 * 60, // 14 days
       autoRemove: 'native'
     }),
