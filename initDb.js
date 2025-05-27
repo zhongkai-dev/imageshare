@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // MongoDB connection string
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://messaging:messaging@zkmessenger.jbjckib.mongodb.net/?retryWrites=true&w=majority&appName=ZKMessenger';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI, {
